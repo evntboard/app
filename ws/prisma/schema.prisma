@@ -1,0 +1,186 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id              String               @id @default(cuid())
+  name            String?              @unique
+  email           String               @unique
+  emailVerified   DateTime?            @map("email_verified")
+  image           String?
+  accounts        Account[]
+  sessions        Session[]
+  myOrganizations Organization[]
+  organizations   UsersOrganizations[]
+
+  stripeCustomerId       String?   @unique @map(name: "stripe_customer_id")
+  stripeSubscriptionId   String?   @unique @map(name: "stripe_subscription_id")
+  stripePriceId          String?   @map(name: "stripe_price_id")
+  stripeCurrentPeriodEnd DateTime? @map(name: "stripe_current_period_end")
+
+  @@map("user")
+}
+
+model Account {
+  userId            String
+  type              String
+  provider          String
+  providerAccountId String
+  refresh_token     String?
+  access_token      String?
+  expires_at        Int?
+  token_type        String?
+  scope             String?
+  id_token          String?
+  session_state     String?
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@id([provider, providerAccountId])
+  @@map("account")
+}
+
+model Session {
+  sessionToken String   @unique
+  userId       String
+  expires      DateTime
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("session")
+}
+
+model VerificationToken {
+  identifier String
+  token      String   @unique
+  expires    DateTime
+
+  @@id([identifier, token])
+  @@map("verification_token")
+}
+
+model Organization {
+  id        String               @id @default(cuid())
+  name      String               @unique
+  creator   User?                @relation(fields: [creatorId], references: [id])
+  creatorId String?              @map(name: "creator_id")
+  users     UsersOrganizations[]
+  shareds   Shared[]
+  triggers  Trigger[]
+  modules   Module[]
+  storages  Storage[]
+  events    Event[]
+
+  @@map("organization")
+}
+
+model UsersOrganizations {
+  user           User         @relation(fields: [userId], references: [id])
+  userId         String       @map(name: "user_id")
+  readOnly       Boolean      @default(true) @map(name: "read_only")
+  organization   Organization @relation(fields: [organizationId], references: [id])
+  organizationId String       @map(name: "organization_id")
+  assignedAt     DateTime     @default(now()) @map(name: "assigned_at")
+  assignedBy     String       @map(name: "assigned_by")
+
+  @@id([userId, organizationId])
+  @@map("user_organization")
+}
+
+model Shared {
+  id             String       @id @default(cuid())
+  name           String
+  code           String
+  enable         Boolean
+  organization   Organization @relation(fields: [organizationId], references: [id])
+  organizationId String       @map(name: "organization_id")
+
+  @@unique([name, organizationId])
+  @@map("shared")
+}
+
+model Trigger {
+  id             String       @id @default(cuid())
+  name           String
+  enable         Boolean
+  channel        String
+  code           String
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  organizationId String       @map(name: "organization_id")
+  conditions     Condition[]
+
+  @@unique([name, organizationId])
+  @@map("trigger")
+}
+
+enum ConditionType {
+  BASIC
+  THROTTLE
+  DEBOUNCE
+}
+
+model Condition {
+  id        String        @id @default(cuid())
+  name      String
+  enable    Boolean
+  code      String
+  type      ConditionType @default(BASIC)
+  timeout   Int
+  trigger   Trigger       @relation(fields: [triggerId], references: [id], onDelete: Cascade)
+  triggerId String        @map(name: "trigger_id")
+
+  @@unique([name, triggerId])
+  @@map("condition")
+}
+
+model Module {
+  id             String        @id @default(cuid())
+  code           String
+  name           String
+  token          String
+  organization   Organization  @relation(fields: [organizationId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  organizationId String        @map(name: "organization_id")
+  params         ModuleParam[]
+
+  @@unique([name, organizationId])
+  @@map("module")
+}
+
+model ModuleParam {
+  id       String @id @default(cuid())
+  key      String
+  value    String
+  module   Module @relation(fields: [moduleId], references: [id], onDelete: Cascade)
+  moduleId String @map(name: "module_id")
+
+  @@unique([key, moduleId])
+  @@map("module_params")
+}
+
+model Storage {
+  id             String       @id @default(cuid())
+  key            String
+  value          Json
+  organization   Organization @relation(fields: [organizationId], references: [id])
+  organizationId String       @map(name: "organization_id")
+
+  @@unique([key, organizationId])
+  @@map("storage")
+}
+
+model Event {
+  id             String       @id @default(cuid())
+  name           String
+  payload        Json
+  organization   Organization @relation(fields: [organizationId], references: [id])
+  organizationId String       @map(name: "organization_id")
+
+  @@map("event")
+}
