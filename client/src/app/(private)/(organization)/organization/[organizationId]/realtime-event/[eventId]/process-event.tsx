@@ -10,6 +10,7 @@ import {Tooltip, TooltipContent, TooltipTrigger} from "@/components/ui/tooltip";
 import {DataTable} from "@/components/data-table";
 import * as React from "react";
 import {useEffect, useState} from "react";
+import { Badge } from "@/components/ui/badge";
 
 const columnsProcess: ColumnDef<TriggerWithProcessData>[] = [
   {
@@ -31,6 +32,16 @@ const columnsProcess: ColumnDef<TriggerWithProcessData>[] = [
   {
     accessorKey: "trigger.name",
     header: "Trigger",
+  },
+  {
+    accessorKey: "exec",
+    header: "Reaction executed",
+    cell: ({row: {original}}) => {
+      if (original?.process?.exec === "true") {
+        return (<Badge>YES</Badge>)
+      }
+      return (<Badge variant="destructive">NO</Badge>)
+    }
   },
   {
     id: "process",

@@ -326,7 +326,19 @@ export function TriggerForm({className, entity, organizationId, ...props}: Props
                         <FormItem className="flex-1">
                           <FormLabel>Timeout</FormLabel>
                           <FormControl>
-                            <Input type="number" placeholder="/constants" {...field} />
+                            <Input
+                              type="number"
+                              placeholder="/constants"
+                              {...field}
+                              onChange={(e) => {
+                                const number = parseInt(e.target.value, 10)
+                                if (isNaN(number)) {
+                                  field.onChange(e.target.value)
+                                } else {
+                                  field.onChange(number)
+                                }
+                              }}
+                            />
                           </FormControl>
                           <FormDescription></FormDescription>
                           <FormMessage/>

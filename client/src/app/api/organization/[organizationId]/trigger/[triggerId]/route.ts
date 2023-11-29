@@ -97,7 +97,6 @@ export async function PATCH(
         name: body.name,
         code: body.code,
         channel: body.channel,
-        enable: body.enable,
         conditions: {
           upsert: (body.conditions as Condition[]).map((condition) => ({
             where: condition.id
@@ -113,8 +112,8 @@ export async function PATCH(
               },
             update: {
               name: condition.name,
-              enable: condition.enable,
               code: condition.code,
+              enable: condition.enable,
               type: condition.type,
               timeout: condition.timeout,
             },

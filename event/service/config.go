@@ -2,7 +2,7 @@ package service
 
 import (
 	"errors"
-	"github.com/evntboard/cloud/event/model"
+	"github.com/evntboard/app/event/model"
 	"os"
 	"strconv"
 )

@@ -7,6 +7,7 @@ export type TriggerWithProcessData = {
     start?: string,
     end?: string,
     error?: string,
+    exec?: "true" | "false",
   } | undefined,
   logs: Array<string>
 }

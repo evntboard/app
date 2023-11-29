@@ -1,4 +1,4 @@
-module github.com/evntboard/cloud/event
+module github.com/evntboard/app/event
 
 go 1.21.3
 

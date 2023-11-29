@@ -102,7 +102,7 @@ export async function POST(req: Request, context: z.infer<typeof routeContextSch
         name: body.name,
         code: body.code,
         channel: body.channel,
-        enable: body.enable,
+        enable: false,
         organizationId: params.organizationId,
         conditions: {
           createMany: {

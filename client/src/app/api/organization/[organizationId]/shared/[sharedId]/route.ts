@@ -80,7 +80,6 @@ export async function PATCH(
       },
       data: {
         code: body.code,
-        enable: body.enable,
         name: body.name,
       },
     })

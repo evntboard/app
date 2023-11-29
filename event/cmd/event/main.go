@@ -1,7 +1,7 @@
 package main
 
 import (
-	"github.com/evntboard/cloud/event/service"
+	"github.com/evntboard/app/event/service"
 	"github.com/joho/godotenv"
 )
 

@@ -4,8 +4,8 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"github.com/evntboard/cloud/event/model"
-	"github.com/evntboard/cloud/event/utils"
+	"github.com/evntboard/app/event/model"
+	"github.com/evntboard/app/event/utils"
 	"log"
 	"time"
 )
@@ -89,10 +89,10 @@ func (c *EventsManagerService) processEvent(event *model.Event, condition *model
 		throttle := utils.NewThrottle(c.redisService.Client, condition.TriggerID+":"+condition.Name, currentTimeout)
 
 		if throttle.ShouldExecute() {
-			c.process(wvm)
 			throttle.RecordExecutionTime()
+			c.process(wvm)
 		} else {
-			c.stopEventProcess(event, condition)
+			c.endEventProcess(event, condition)
 		}
 
 	case "DEBOUNCE":
@@ -104,7 +104,7 @@ func (c *EventsManagerService) processEvent(event *model.Event, condition *model
 				c.process(wvm)
 			},
 			func() {
-				c.stopEventProcess(event, condition)
+				c.endEventProcess(event, condition)
 			},
 		)
 
@@ -118,6 +118,7 @@ func (c *EventsManagerService) processEvent(event *model.Event, condition *model
 
 func (c *EventsManagerService) process(wvm *VmWrapped) {
 	wvm.LoadSharedScript()
+
 	ok, err := wvm.ExecuteCondition()
 
 	if err != nil {
@@ -125,6 +126,7 @@ func (c *EventsManagerService) process(wvm *VmWrapped) {
 	} else if ok {
 		wvm.LoadVars()
 		wvm.LockChannel()
+		c.reactionOkEventProcess(wvm.event, wvm.condition)
 		if err := wvm.ExecuteReaction(); err != nil {
 			c.errorEventProcess(wvm.event, wvm.condition, err)
 		} else {
@@ -132,28 +134,28 @@ func (c *EventsManagerService) process(wvm *VmWrapped) {
 		}
 		wvm.UnlockChannel()
 	} else {
-		c.stopEventProcess(wvm.event, wvm.condition)
+		c.endEventProcess(wvm.event, wvm.condition)
 	}
+}
+
+func (c *EventsManagerService) reactionOkEventProcess(event *model.Event, condition *model.TriggerCondition) {
+	ctx := context.Background()
+	c.redisService.Client.HSet(ctx, fmt.Sprintf("event:%s:trigger:%s:process", event.ID, condition.TriggerID), map[string]string{"exec": "true"})
+	if err := c.redisService.Client.Publish(ctx, fmt.Sprintf("organization:%s:event:%s", condition.Trigger.OrganizationId, event.ID), nil).Err(); err != nil {
+		fmt.Println(err)
+	}
+
+	log.Printf("[%s] %s : Reaction start process [%s] %s\n", event.ID, event.Name, condition.Trigger.ID, condition.Trigger.Name)
 }
 
 func (c *EventsManagerService) startEventProcess(event *model.Event, condition *model.TriggerCondition) {
 	ctx := context.Background()
-	c.redisService.Client.HSet(ctx, fmt.Sprintf("event:%s:trigger:%s:process", event.ID, condition.TriggerID), map[string]string{"start": time.Now().Format(time.RFC3339Nano)})
+	c.redisService.Client.HSet(ctx, fmt.Sprintf("event:%s:trigger:%s:process", event.ID, condition.TriggerID), map[string]string{"start": time.Now().Format(time.RFC3339Nano), "exec": "false"})
 	if err := c.redisService.Client.Publish(ctx, fmt.Sprintf("organization:%s:event:%s", condition.Trigger.OrganizationId, event.ID), nil).Err(); err != nil {
 		fmt.Println(err)
 	}
 
 	log.Printf("[%s] %s : Start process [%s] %s\n", event.ID, event.Name, condition.Trigger.ID, condition.Trigger.Name)
-}
-
-func (c *EventsManagerService) stopEventProcess(event *model.Event, condition *model.TriggerCondition) {
-	ctx := context.Background()
-	c.redisService.Client.HSet(ctx, fmt.Sprintf("event:%s:trigger:%s:process", event.ID, condition.TriggerID), map[string]string{"end": time.Now().Format(time.RFC3339Nano)})
-	if err := c.redisService.Client.Publish(ctx, fmt.Sprintf("organization:%s:event:%s", condition.Trigger.OrganizationId, event.ID), nil).Err(); err != nil {
-		fmt.Println(err)
-	}
-
-	log.Printf("[%s] %s : Stop process [%s] %s\n", event.ID, event.Name, condition.Trigger.ID, condition.Trigger.Name)
 }
 
 func (c *EventsManagerService) endEventProcess(event *model.Event, condition *model.TriggerCondition) {

@@ -3,7 +3,7 @@ package service
 import "C"
 import (
 	"errors"
-	"github.com/evntboard/cloud/event/model"
+	"github.com/evntboard/app/event/model"
 )
 
 type TriggerService struct {
