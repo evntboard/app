@@ -8,6 +8,17 @@ export const sessionRegisterSchema = z.object({
 })
 
 export const eventNewSchema = z.object({
-  name: z.string(),
+  name: z.string().min(3),
   payload: z.any()
+})
+
+
+export const storageGetSchema = z.object({
+  key: z.string()
+})
+
+export const storageSetSchema = z.object({
+  key: z.string(),
+  value: z.any(),
+  isTemp: z.boolean(),
 })

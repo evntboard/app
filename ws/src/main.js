@@ -10,9 +10,12 @@ import {
   JSONRPCServer
 } from 'json-rpc-2.0'
 
-import { sessionRegister } from './methods/sessionRegister.js'
-import { redis, redisSub } from './redis.js'
 import { eventNew } from './methods/eventNew.js'
+import { sessionRegister } from './methods/sessionRegister.js'
+import { storageGet } from './methods/storageGet.js'
+import { storageSet } from './methods/storageSet.js'
+
+import { redis, redisSub } from './redis.js'
 import { clients } from './sessions.js'
 import { generateModuleKeyChannel, generateModulesKey } from './utils.js'
 import { APP_PORT } from './constant.js'
@@ -21,6 +24,8 @@ const server = new JSONRPCServer()
 
 server.addMethod('session.register', sessionRegister)
 server.addMethod('event.new', eventNew)
+server.addMethod('storage.set', storageSet)
+server.addMethod('storage.get', storageGet)
 
 const wss = new WebSocketServer({ port: APP_PORT, path: '/module' })
 
