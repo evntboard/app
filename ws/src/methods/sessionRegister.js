@@ -5,7 +5,12 @@ import { prisma } from '../prisma.js'
 import { redis, redisSub, redisSubOrga } from '../redis.js'
 import { sessionRegisterSchema } from '../schema.js'
 import { clients } from '../sessions.js'
-import { generateModuleKeyChannel, generateModuleKeyResponseChannel, generateModulesKey } from '../utils.js'
+import {
+  generateModuleKeyChannel,
+  generateModuleKeyResponseChannel,
+  generateModulesKey,
+  generateStorageKey
+} from '../utils.js'
 
 export const sessionRegister = async (rawParams, { clientId }) => {
   const params = sessionRegisterSchema.safeParse(rawParams)
@@ -127,6 +132,7 @@ export const sessionRegister = async (rawParams, { clientId }) => {
   await redis.hset(modulesKey, clientId, `${params.data.code}:${params.data.name}`)
 
   redisSub.subscribe(generateModuleKeyChannel(module.organizationId, clientId))
+  redisSub.subscribe(generateStorageKey(module.organizationId))
 
   return module.params
 }

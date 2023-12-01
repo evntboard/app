@@ -106,11 +106,14 @@ redisSub.on('message', async (channel, raw) => {
 
   switch (type) {
     case 'storage': {
-      if (clients.has(clientId)) {
-        const client = clients.get(clientId)
-        const message = JSON.parse(raw)
+      const message = JSON.parse(raw)
 
-        client?.rpc?.notify?.('storage', message)
+      const clientsObj = Object.fromEntries(clients.entries())
+
+      for (let clientId in clientsObj) {
+        if (clientsObj.hasOwnProperty(clientId)) {
+          clientsObj[clientId]?.rpc?.notify?.('storage.sync', message)
+        }
       }
       break
     }

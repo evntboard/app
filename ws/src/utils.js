@@ -1,3 +1,7 @@
+export const generateStorageKey = (organizationId) => {
+  return `organization:${organizationId}:storage`
+}
+
 export const generateModulesKey = (organizationId) => {
   return `organization:${organizationId}:modules`
 }

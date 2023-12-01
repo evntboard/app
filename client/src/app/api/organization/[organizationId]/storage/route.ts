@@ -60,6 +60,11 @@ export async function POST(req: Request, context: z.infer<typeof routeContextSch
         await redis.hset(`organization:${params.organizationId}:storage`, body.key, JSON.stringify(body.value))
         const data = await redis.hget(`organization:${params.organizationId}:storage`, body.key)
 
+        redis.publish(`organization:${params.organizationId}:storage`, JSON.stringify({
+          key: body.key,
+          value: data
+        }))
+
         return NextResponse.json({
           key: body.key,
           value: JSON.parse(data ?? ""),
@@ -91,6 +96,12 @@ export async function POST(req: Request, context: z.infer<typeof routeContextSch
             organizationId: params.organizationId,
           },
         })
+
+        redis.publish(`organization:${params.organizationId}:storage`, JSON.stringify({
+          key: entity.key,
+          value: entity.value
+        }))
+
         return NextResponse.json({
           key: entity.key,
           value: entity.value,

@@ -346,7 +346,7 @@ func (c *VmWrapped) vmStoragePersistentSet(key string, value string) string {
 
 	channel := fmt.Sprintf("organization:%s:storage", c.condition.Trigger.OrganizationId)
 
-	messageJSON, err := json.Marshal(map[string]string{"id": res.ID, "key": key, "value": value})
+	messageJSON, err := json.Marshal(map[string]string{"key": key, "value": value})
 	if err != nil {
 		log.Println("Erreur de codage JSON de la requête:", err)
 	}
