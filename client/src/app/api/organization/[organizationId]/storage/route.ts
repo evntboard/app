@@ -62,7 +62,7 @@ export async function POST(req: Request, context: z.infer<typeof routeContextSch
 
         redis.publish(`organization:${params.organizationId}:storage:temporary`, JSON.stringify({
           key: body.key,
-          value: data
+          value: JSON.parse(data ?? '')
         }))
 
         return NextResponse.json({

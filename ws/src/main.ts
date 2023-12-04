@@ -153,7 +153,7 @@ redisSub.on('message', async (channel, raw) => {
       const [clientId] = rest
       if (clients.has(clientId)) {
         const client = clients.get(clientId)
-        const message : {  notification: boolean, channel: string, method: string, params: any } = JSON.parse(raw)
+        const message: { notification: boolean, channel: string, method: string, params: any } = JSON.parse(raw)
         if (message.notification) {
           try {
             client?.rpc?.notify?.(message?.method, message?.params)
