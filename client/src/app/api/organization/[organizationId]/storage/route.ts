@@ -32,7 +32,7 @@ export async function POST(req: Request, context: z.infer<typeof routeContextSch
     const json = await req.json()
 
     const storageSchema = z.object({
-      key: z.string(),
+      key: z.string().min(3),
       type: z.string(),
       value: z.any(),
     })

@@ -7,4 +7,5 @@ export const clients : Map<string, {
   organizationId: string | undefined
   code: string | undefined
   name: string | undefined
+  subs: string[]
 }> = new Map()

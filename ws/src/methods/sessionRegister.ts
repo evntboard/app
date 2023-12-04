@@ -4,7 +4,13 @@ import {prisma} from '../prisma'
 import {redis, redisSub} from '../redis'
 import {sessionRegisterSchema} from '../schema'
 import {clients} from '../sessions'
-import {generateModuleKeyChannel, generateModuleKeyChannelEject, generateModulesKey, generateStorageKey} from '../utils'
+import {
+  generateModuleKeyChannel,
+  generateModuleKeyChannelEject,
+  generateModulesKey,
+  generatePersistentStorageKey,
+  generateTemporaryStorageKey
+} from '../utils'
 
 export const sessionRegister: SimpleJSONRPCMethod<{ clientId: string }> = async (rawParams, {clientId}) => {
   if (!clients.has(clientId)) {
@@ -91,13 +97,16 @@ export const sessionRegister: SimpleJSONRPCMethod<{ clientId: string }> = async 
     ...client,
     code: params.data.code,
     name: params.data.name,
-    organizationId: module.organizationId
+    organizationId: module.organizationId,
+    subs: params.data.subs ?? []
   })
 
   await redis.hset(modulesKey, clientId, `${params.data.code}:${params.data.name}`)
 
   redisSub.subscribe(generateModuleKeyChannel(module.organizationId, clientId))
-  redisSub.subscribe(generateStorageKey(module.organizationId))
+  redisSub.subscribe(generatePersistentStorageKey(module.organizationId))
+  redisSub.subscribe(generateTemporaryStorageKey(module.organizationId))
+  redisSub.subscribe(generateModuleKeyChannel(module.organizationId, clientId))
   redisSub.subscribe(generateModuleKeyChannelEject(module.organizationId, clientId))
 
   return module.params

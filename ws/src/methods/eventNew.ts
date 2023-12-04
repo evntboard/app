@@ -17,15 +17,7 @@ export const eventNew: SimpleJSONRPCMethod<{ clientId: string }> = async (rawPar
 
   const client = clients.get(clientId)
 
-  if (!client) {
-    return new JSONRPCErrorException(
-      'Unknown client',
-      213,
-      "Unknown client"
-    )
-  }
-
-  if (!client.organizationId || !client.code || !client.name) {
+  if (!client || !client.organizationId || !client.code || !client.name) {
     return new JSONRPCErrorException(
       'Unknown client',
       213,

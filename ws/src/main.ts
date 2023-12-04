@@ -17,7 +17,13 @@ import {storageSet} from './methods/storageSet'
 
 import {redis, redisSub} from './redis'
 import {clients} from './sessions'
-import {generateModuleKeyChannel, generateModulesKey} from './utils'
+import {
+  generateModuleKeyChannel,
+  generateModuleKeyChannelEject,
+  generateModulesKey,
+  generatePersistentStorageKey,
+  generateTemporaryStorageKey
+} from './utils'
 import {APP_PORT} from './constant'
 
 const server = new JSONRPCServer<{ clientId: string }>()
@@ -43,6 +49,7 @@ wss.on('connection', async (ws: WebSocket) => {
   clients.set(
     clientId,
     {
+      subs: [],
       ws,
       rpc: client,
       organizationId: undefined,
@@ -77,7 +84,12 @@ wss.on('connection', async (ws: WebSocket) => {
       }
 
       await redis.hdel(generateModulesKey(client.organizationId), clientId)
+
       redisSub.unsubscribe(generateModuleKeyChannel(client.organizationId, clientId))
+      redisSub.unsubscribe(generatePersistentStorageKey(client.organizationId))
+      redisSub.unsubscribe(generateTemporaryStorageKey(client.organizationId))
+      redisSub.unsubscribe(generateModuleKeyChannel(client.organizationId, clientId))
+      redisSub.unsubscribe(generateModuleKeyChannelEject(client.organizationId, clientId))
     }
   })
 
@@ -114,19 +126,23 @@ wss.on('connection', async (ws: WebSocket) => {
 redisSub.on('message', async (channel, raw) => {
   // `organization:${organizationId}:XXXX`
   // [ "organization", organizationId, type
-  const [, , type, ...rest] = channel.split(':')
+  const [, organizationId, type, ...rest] = channel.split(':')
 
   switch (type) {
-    // `organization:${organizationId}:storage:storageType`
+    // `organization:${organizationId}:storage:${storageType}`
     // persistent || temporary
     case 'storage': {
       const [storageType] = rest
-      const message = JSON.parse(raw)
+      const message: { key: string, value: string } = JSON.parse(raw)
 
       const clientsObj = Object.fromEntries(clients.entries())
 
       for (let clientId in clientsObj) {
-        if (clientsObj.hasOwnProperty(clientId)) {
+        if (
+          clientsObj.hasOwnProperty(clientId) &&
+          clientsObj[clientId]?.organizationId === organizationId &&
+          clientsObj[clientId]?.subs.includes(message.key)
+        ) {
           clientsObj[clientId]?.rpc?.notify?.(`storage.${storageType}.sync`, message)
         }
       }
@@ -137,7 +153,7 @@ redisSub.on('message', async (channel, raw) => {
       const [clientId] = rest
       if (clients.has(clientId)) {
         const client = clients.get(clientId)
-        const message = JSON.parse(raw)
+        const message : {  notification: boolean, channel: string, method: string, params: any } = JSON.parse(raw)
         if (message.notification) {
           try {
             client?.rpc?.notify?.(message?.method, message?.params)
