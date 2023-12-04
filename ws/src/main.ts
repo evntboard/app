@@ -32,10 +32,10 @@ const server = new JSONRPCServer<{ clientId: string }>()
 
 server.addMethod('session.register', sessionRegister)
 server.addMethod('event.new', eventNew)
-server.addMethod('storage.temporary.set', storagePersistentSet)
-server.addMethod('storage.temporary.get', storagePersistentGet)
-server.addMethod('storage.persistent.set', storageTemporarySet)
-server.addMethod('storage.persistent.get', storageTemporaryGet)
+server.addMethod('storage.temporary.set', storageTemporarySet)
+server.addMethod('storage.temporary.get', storageTemporaryGet)
+server.addMethod('storage.persistent.set', storagePersistentSet)
+server.addMethod('storage.persistent.get', storagePersistentGet)
 
 const wss = new WebSocketServer({port: APP_PORT, path: '/module'})
 
