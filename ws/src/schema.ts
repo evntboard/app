@@ -20,5 +20,4 @@ export const storageGetSchema = z.object({
 export const storageSetSchema = z.object({
   key: z.string(),
   value: z.any(),
-  isTemp: z.boolean(),
 })

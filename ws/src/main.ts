@@ -12,8 +12,10 @@ import {
 
 import {eventNew} from './methods/eventNew'
 import {sessionRegister} from './methods/sessionRegister'
-import {storageGet} from './methods/storageGet'
-import {storageSet} from './methods/storageSet'
+import {storagePersistentGet} from './methods/storagePersistentGet'
+import {storagePersistentSet} from './methods/storagePersistentSet'
+import {storageTemporarySet} from "./methods/storageTemporarySet";
+import {storageTemporaryGet} from "./methods/storageTemporaryGet";
 
 import {redis, redisSub} from './redis'
 import {clients} from './sessions'
@@ -30,8 +32,10 @@ const server = new JSONRPCServer<{ clientId: string }>()
 
 server.addMethod('session.register', sessionRegister)
 server.addMethod('event.new', eventNew)
-server.addMethod('storage.set', storageSet)
-server.addMethod('storage.get', storageGet)
+server.addMethod('storage.temporary.set', storagePersistentSet)
+server.addMethod('storage.temporary.get', storagePersistentGet)
+server.addMethod('storage.persistent.set', storageTemporarySet)
+server.addMethod('storage.persistent.get', storageTemporaryGet)
 
 const wss = new WebSocketServer({port: APP_PORT, path: '/module'})
 

@@ -3,9 +3,8 @@ import {JSONRPCErrorException, SimpleJSONRPCMethod} from 'json-rpc-2.0'
 import {storageGetSchema} from '../schema'
 import {prisma} from '../prisma'
 import {clients} from '../sessions'
-import {redis} from '../redis'
 
-export const storageGet: SimpleJSONRPCMethod<{ clientId: string }> = async (rawParams, {clientId}) => {
+export const storagePersistentGet: SimpleJSONRPCMethod<{ clientId: string }> = async (rawParams, {clientId}) => {
   if (!clients.has(clientId)) {
     return new JSONRPCErrorException(
       'Unknown client',
@@ -45,27 +44,13 @@ export const storageGet: SimpleJSONRPCMethod<{ clientId: string }> = async (rawP
     },
   })
 
-  if (storagePersist) {
-    return storagePersist.value
+  if (!storagePersist) {
+    throw new JSONRPCErrorException(
+      'Unknown key',
+      214,
+      "key has not value"
+    )
   }
 
-  const storageTemp = await redis.hget(`organization:${client.organizationId}:storage`, params.data.key)
-
-  if (storageTemp) {
-    try {
-      return JSON.parse(storageTemp)
-    } catch (e) {
-      throw new JSONRPCErrorException(
-        'Invalid JSON value',
-        214,
-        "key have an invalid JSON value"
-      )
-    }
-  }
-
-  throw new JSONRPCErrorException(
-    'Unknown key',
-    214,
-    "key has not value"
-  )
+  return storagePersist.value
 }
