@@ -1,13 +1,12 @@
 import { JSONRPCErrorException } from 'json-rpc-2.0'
-import { v4 as uuid } from 'uuid'
 
 import { prisma } from '../prisma.js'
-import { redis, redisSub, redisSubOrga } from '../redis.js'
+import { redis, redisSub } from '../redis.js'
 import { sessionRegisterSchema } from '../schema.js'
 import { clients } from '../sessions.js'
 import {
   generateModuleKeyChannel,
-  generateModuleKeyResponseChannel,
+  generateModuleKeyChannelEject,
   generateModulesKey,
   generateStorageKey
 } from '../utils.js'
@@ -62,62 +61,15 @@ export const sessionRegister = async (rawParams, { clientId }) => {
 
   const modules = await redis.hgetall(modulesKey)
 
-  // there is always ONE module with code:name for an orga
+  // there is always only ONE module with code:name for an orga
   const anotherConnected = Object.entries(modules).find(([_, moduleName]) => moduleName === `${params.data.code}:${params.data.name}`)
 
   if (anotherConnected) {
-    const channel = generateModuleKeyChannel(module.organizationId, anotherConnected[0])
-
-    // verify if module is really connected !
-    const isReallyConnected = await new Promise((resolve) => {
-      const requestId = uuid()
-      const channelResponse = generateModuleKeyResponseChannel(module.organizationId, anotherConnected[0], requestId)
-
-      redisSubOrga.on('message', (c, raw) => {
-        if (c === channelResponse) {
-          try {
-            const msg = JSON.parse(raw)
-            if (msg.error) {
-              resolve(false)
-            } else {
-              resolve(true)
-            }
-          } catch (e) {
-            resolve(false)
-          } finally {
-            redisSubOrga.unsubscribe(channelResponse)
-          }
-        }
-      })
-
-      setTimeout(() => {
-        redisSubOrga.unsubscribe(channelResponse)
-        resolve(false)
-      }, 5_000)
-
-      redisSubOrga.subscribe(channelResponse)
-
-      redis.publish(
-        channel,
-        JSON.stringify({
-          channel: channelResponse,
-          method: 'healthcheck',
-          params: null
-        })
-      )
-      return true
-    })
-
-    if (!isReallyConnected) {
-      await redis.hdel(modulesKey, anotherConnected[0])
-      redisSub.unsubscribe(channel)
-    } else {
-      throw new JSONRPCErrorException(
-        'Already connected',
-        12,
-        'Already connected'
-      )
-    }
+    throw new JSONRPCErrorException(
+      'Already connected',
+      12,
+      'Already connected'
+    )
   }
 
   console.log(`REGISTER MODULE ${params.data.code}:${params.data.name}`)
@@ -133,6 +85,7 @@ export const sessionRegister = async (rawParams, { clientId }) => {
 
   redisSub.subscribe(generateModuleKeyChannel(module.organizationId, clientId))
   redisSub.subscribe(generateStorageKey(module.organizationId))
+  redisSub.subscribe(generateModuleKeyChannelEject(module.organizationId, clientId))
 
   return module.params
 }

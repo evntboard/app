@@ -51,6 +51,11 @@ export async function DELETE(
 
     if (existInRedis) {
       await redis.hdel(`organization:${params.organizationId}:storage`, params.storageKey)
+
+      redis.publish(`organization:${params.organizationId}:storage:temporary`, JSON.stringify({
+        key: params.storageKey,
+        value: null
+      }))
     }
 
     if (existInStorage) {
@@ -62,6 +67,11 @@ export async function DELETE(
           }
         },
       })
+
+      redis.publish(`organization:${params.organizationId}:storage:persistent`, JSON.stringify({
+        key: params.storageKey,
+        value: null
+      }))
     }
 
     return new Response(null, {status: 204})

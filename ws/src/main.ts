@@ -1,6 +1,6 @@
 import 'dotenv/config'
-import { WebSocketServer } from 'ws'
-import { v4 as uuid } from 'uuid'
+import {WebSocketServer} from 'ws'
+import {v4 as uuid} from 'uuid'
 import {
   isJSONRPCRequest,
   isJSONRPCRequests,
@@ -10,24 +10,24 @@ import {
   JSONRPCServer
 } from 'json-rpc-2.0'
 
-import { eventNew } from './methods/eventNew.js'
-import { sessionRegister } from './methods/sessionRegister.js'
-import { storageGet } from './methods/storageGet.js'
-import { storageSet } from './methods/storageSet.js'
+import {eventNew} from './methods/eventNew'
+import {sessionRegister} from './methods/sessionRegister'
+import {storageGet} from './methods/storageGet'
+import {storageSet} from './methods/storageSet'
 
-import { redis, redisSub } from './redis.js'
-import { clients } from './sessions.js'
-import { generateModuleKeyChannel, generateModulesKey } from './utils.js'
-import { APP_PORT } from './constant.js'
+import {redis, redisSub} from './redis'
+import {clients} from './sessions'
+import {generateModuleKeyChannel, generateModulesKey} from './utils'
+import {APP_PORT} from './constant'
 
-const server = new JSONRPCServer()
+const server = new JSONRPCServer<{ clientId: string }>()
 
 server.addMethod('session.register', sessionRegister)
 server.addMethod('event.new', eventNew)
 server.addMethod('storage.set', storageSet)
 server.addMethod('storage.get', storageGet)
 
-const wss = new WebSocketServer({ port: APP_PORT, path: '/module' })
+const wss = new WebSocketServer({port: APP_PORT, path: '/module'})
 
 wss.on('connection', async (ws) => {
   const clientId = uuid()
@@ -43,28 +43,39 @@ wss.on('connection', async (ws) => {
   clients.set(
     clientId,
     {
+      organizationId: undefined,
+      name: undefined,
+      code: undefined,
       ws,
-      rpc: client,
-      moduleId: null
+      rpc: client
     }
   )
 
   setTimeout(async () => {
-    const client = clients.get(clientId)
+    if (clients.has(clientId)) {
+      const client = clients.get(clientId)
 
-    if (!client.organizationId) {
-      ws.close()
-    }
+      if (!client || !client.organizationId) {
+        ws.close()
+        return
+      }
 
-    const value = await redis.hget(generateModulesKey(client.organizationId), clientId)
-    if (!value) {
-      ws.close()
+      const value = await redis.hget(generateModulesKey(client.organizationId), clientId)
+      if (!value) {
+        ws.close()
+      }
     }
   }, 10_000)
 
   ws.on('close', async () => {
     if (clients.has(clientId)) {
       const client = clients.get(clientId)
+
+      if (!client || !client.organizationId) {
+        ws.close()
+        return
+      }
+
       await redis.hdel(generateModulesKey(client.organizationId), clientId)
       redisSub.unsubscribe(generateModuleKeyChannel(client.organizationId, clientId))
     }
@@ -88,7 +99,7 @@ wss.on('connection', async (ws) => {
 
     // is a request
     if (isJSONRPCRequest(payload) || isJSONRPCRequests(payload)) {
-      const response = await server.receive(payload, { clientId })
+      const response = await server.receive(payload, {clientId})
       if (response != null) {
         return await client.send(response)
       }
@@ -101,23 +112,29 @@ wss.on('connection', async (ws) => {
 
 // global listener on pub sub !
 redisSub.on('message', async (channel, raw) => {
-  // `organization:${organizationId}:module:${clientId}`
-  const [, , type, clientId] = channel.split(':')
+  // `organization:${organizationId}:XXXX`
+  // [ "organization", organizationId, type
+  const [, , type, ...rest] = channel.split(':')
 
   switch (type) {
+    // `organization:${organizationId}:storage:storageType`
+    // persistent || temporary
     case 'storage': {
+      const [storageType] = rest
       const message = JSON.parse(raw)
 
       const clientsObj = Object.fromEntries(clients.entries())
 
       for (let clientId in clientsObj) {
         if (clientsObj.hasOwnProperty(clientId)) {
-          clientsObj[clientId]?.rpc?.notify?.('storage.sync', message)
+          clientsObj[clientId]?.rpc?.notify?.(`storage.${storageType}.sync`, message)
         }
       }
       break
     }
+    // `organization:${organizationId}:module:${clientId}`
     case 'module': {
+      const [clientId] = rest
       if (clients.has(clientId)) {
         const client = clients.get(clientId)
         const message = JSON.parse(raw)
@@ -125,10 +142,12 @@ redisSub.on('message', async (channel, raw) => {
           try {
             client?.rpc?.notify?.(message?.method, message?.params)
             redis.publish(message?.channel, JSON.stringify(null))
-          } catch (e) {
-            redis.publish(message?.channel, JSON.stringify({
-              error: e.message
-            }))
+          } catch (e: unknown) {
+            if (e instanceof Error) {
+              redis.publish(message?.channel, JSON.stringify({
+                error: e.message
+              }))
+            }
           }
         } else {
           try {
@@ -136,27 +155,32 @@ redisSub.on('message', async (channel, raw) => {
               ?.rpc
               ?.timeout(2_000)
               ?.request?.(message?.method, message?.params)
-            if (message?.method === 'healthcheck' && result !== true) {
-              await redis.hdel(generateModulesKey(client.organizationId), clientId)
-              redisSub.unsubscribe(generateModuleKeyChannel(client.organizationId, clientId))
-              client?.ws?.close()
-            }
 
             redis.publish(message?.channel, JSON.stringify({
               result
             }))
-          } catch (e) {
-            if (message?.method === 'healthcheck') {
-              await redis.hdel(generateModulesKey(client.organizationId), clientId)
-              redisSub.unsubscribe(generateModuleKeyChannel(client.organizationId, clientId))
-              client?.ws?.close()
+          } catch (e: unknown) {
+            if (e instanceof Error) {
+              redis.publish(message?.channel, JSON.stringify({
+                error: e.message
+              }))
             }
-
-            redis.publish(message?.channel, JSON.stringify({
-              error: e.message
-            }))
           }
         }
+      }
+      break
+    }
+    // `organization:${organizationId}:module-eject:${clientId}`
+    case 'module-eject': {
+      const [clientId] = rest
+      if (clients.has(clientId)) {
+        const client = clients.get(clientId)
+
+        if (!client || !client.ws) {
+          return
+        }
+
+        client.ws?.close()
       }
       break
     }

@@ -7,7 +7,23 @@ import { clients } from '../sessions.js'
 import { generateModulesKey } from '../utils.js'
 
 export const eventNew = async (rawParams, { clientId }) => {
+  if (!clients.has(clientId)) {
+    return new JSONRPCErrorException(
+      'Unknown client',
+      213,
+      "Unknown client"
+    )
+  }
+
   const client = clients.get(clientId)
+
+  if (!client) {
+    return new JSONRPCErrorException(
+      'Unknown client',
+      213,
+      "Unknown client"
+    )
+  }
 
   const keyExist = await redis.hexists(generateModulesKey(client.organizationId), clientId)
 
@@ -22,14 +38,12 @@ export const eventNew = async (rawParams, { clientId }) => {
   const params = eventNewSchema.safeParse(rawParams)
 
   if (!params.success) {
-    throw new JSONRPCErrorException(
+    return new JSONRPCErrorException(
       'Invalid params',
       213,
       params.error.issues
     )
   }
-
-  const { organizationId, code, name } = clients.get(clientId)
 
   const event = {
     id: uuid(),
