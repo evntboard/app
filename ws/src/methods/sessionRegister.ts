@@ -1,17 +1,30 @@
-import { JSONRPCErrorException } from 'json-rpc-2.0'
+import {JSONRPCErrorException, SimpleJSONRPCMethod} from 'json-rpc-2.0'
 
-import { prisma } from '../prisma.js'
-import { redis, redisSub } from '../redis.js'
-import { sessionRegisterSchema } from '../schema.js'
-import { clients } from '../sessions.js'
-import {
-  generateModuleKeyChannel,
-  generateModuleKeyChannelEject,
-  generateModulesKey,
-  generateStorageKey
-} from '../utils.js'
+import {prisma} from '../prisma'
+import {redis, redisSub} from '../redis'
+import {sessionRegisterSchema} from '../schema'
+import {clients} from '../sessions'
+import {generateModuleKeyChannel, generateModuleKeyChannelEject, generateModulesKey, generateStorageKey} from '../utils'
 
-export const sessionRegister = async (rawParams, { clientId }) => {
+export const sessionRegister: SimpleJSONRPCMethod<{ clientId: string }> = async (rawParams, {clientId}) => {
+  if (!clients.has(clientId)) {
+    return new JSONRPCErrorException(
+      'Unknown client',
+      213,
+      "Unknown client"
+    )
+  }
+
+  const client = clients.get(clientId)
+
+  if (!client) {
+    return new JSONRPCErrorException(
+      'Unknown client',
+      213,
+      "Unknown client"
+    )
+  }
+
   const params = sessionRegisterSchema.safeParse(rawParams)
 
   if (!params.success) {
@@ -75,7 +88,7 @@ export const sessionRegister = async (rawParams, { clientId }) => {
   console.log(`REGISTER MODULE ${params.data.code}:${params.data.name}`)
 
   clients.set(clientId, {
-    ...clients.get(clientId),
+    ...client,
     code: params.data.code,
     name: params.data.name,
     organizationId: module.organizationId

@@ -1,12 +1,12 @@
-import { v4 as uuid } from 'uuid'
-import { JSONRPCErrorException } from 'json-rpc-2.0'
+import {v4 as uuid} from 'uuid'
+import {JSONRPCErrorException, SimpleJSONRPCMethod} from 'json-rpc-2.0'
 
-import { redis } from '../redis.js'
-import { eventNewSchema } from '../schema.js'
-import { clients } from '../sessions.js'
-import { generateModulesKey } from '../utils.js'
+import {redis} from '../redis'
+import {eventNewSchema} from '../schema'
+import {clients} from '../sessions'
+import {generateModulesKey} from '../utils'
 
-export const eventNew = async (rawParams, { clientId }) => {
+export const eventNew: SimpleJSONRPCMethod<{ clientId: string }> = async (rawParams, {clientId}) => {
   if (!clients.has(clientId)) {
     return new JSONRPCErrorException(
       'Unknown client',
@@ -18,6 +18,14 @@ export const eventNew = async (rawParams, { clientId }) => {
   const client = clients.get(clientId)
 
   if (!client) {
+    return new JSONRPCErrorException(
+      'Unknown client',
+      213,
+      "Unknown client"
+    )
+  }
+
+  if (!client.organizationId || !client.code || !client.name) {
     return new JSONRPCErrorException(
       'Unknown client',
       213,
@@ -47,20 +55,20 @@ export const eventNew = async (rawParams, { clientId }) => {
 
   const event = {
     id: uuid(),
-    emitter_code: code,
-    emitter_name: name,
+    emitter_code: client.code,
+    emitter_name: client.name,
     emitted_at: new Date().toISOString(),
-    organizationId,
+    organizationId: client.organizationId,
     name: params.data.name,
     payload: params.data.payload
   }
 
   await redis.set(`event:${event.id}`, JSON.stringify(event))
 
-  await redis.lpush(`organization:${organizationId}:event`, event.id)
+  await redis.lpush(`organization:${client.organizationId}:event`, event.id)
   await redis.lpush('event', event.id)
 
-  await redis.publish(`organization:${organizationId}:event`, event.id)
+  await redis.publish(`organization:${client.organizationId}:event`, event.id)
 
   return event
 }

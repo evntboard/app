@@ -1,5 +1,5 @@
 import 'dotenv/config'
-import {WebSocketServer} from 'ws'
+import {WebSocket, WebSocketServer} from 'ws'
 import {v4 as uuid} from 'uuid'
 import {
   isJSONRPCRequest,
@@ -29,7 +29,7 @@ server.addMethod('storage.get', storageGet)
 
 const wss = new WebSocketServer({port: APP_PORT, path: '/module'})
 
-wss.on('connection', async (ws) => {
+wss.on('connection', async (ws: WebSocket) => {
   const clientId = uuid()
 
   const client = new JSONRPCClient(
@@ -43,11 +43,11 @@ wss.on('connection', async (ws) => {
   clients.set(
     clientId,
     {
+      ws,
+      rpc: client,
       organizationId: undefined,
       name: undefined,
       code: undefined,
-      ws,
-      rpc: client
     }
   )
 
@@ -83,7 +83,7 @@ wss.on('connection', async (ws) => {
 
   ws.on('error', console.error)
 
-  ws.on('message', async (data) => {
+  ws.on('message', async (data: Buffer) => {
     let payload
     try {
       payload = JSON.parse(data.toString())

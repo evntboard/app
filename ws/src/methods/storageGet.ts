@@ -1,11 +1,37 @@
-import { JSONRPCErrorException } from 'json-rpc-2.0'
+import {JSONRPCErrorException, SimpleJSONRPCMethod} from 'json-rpc-2.0'
 
-import { storageGetSchema } from '../schema.js'
-import { prisma } from '../prisma.js'
-import { clients } from '../sessions.js'
-import { redis } from '../redis.js'
+import {storageGetSchema} from '../schema'
+import {prisma} from '../prisma'
+import {clients} from '../sessions'
+import {redis} from '../redis'
 
-export const storageGet = async (rawParams, { clientId }) => {
+export const storageGet: SimpleJSONRPCMethod<{ clientId: string }> = async (rawParams, {clientId}) => {
+  if (!clients.has(clientId)) {
+    return new JSONRPCErrorException(
+      'Unknown client',
+      213,
+      "Unknown client"
+    )
+  }
+
+  const client = clients.get(clientId)
+
+  if (!client) {
+    return new JSONRPCErrorException(
+      'Unknown client',
+      213,
+      "Unknown client"
+    )
+  }
+
+  if (!client.organizationId || !client.code || !client.name) {
+    return new JSONRPCErrorException(
+      'Unknown client',
+      213,
+      "Unknown client"
+    )
+  }
+
   const params = storageGetSchema.safeParse(rawParams)
 
   if (!params.success) {
@@ -15,8 +41,6 @@ export const storageGet = async (rawParams, { clientId }) => {
       params.error.issues
     )
   }
-
-  const client = clients.get(clientId)
 
   // verify if key don't exist on storage DB
   const storagePersist = await prisma.storage.findFirst({

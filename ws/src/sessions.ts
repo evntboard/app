@@ -8,4 +8,3 @@ export const clients : Map<string, {
   code: string | undefined
   name: string | undefined
 }> = new Map()
-// string ID : { ws: socket, rpc: client, organizationId: XX, code: XX, name: XX }
