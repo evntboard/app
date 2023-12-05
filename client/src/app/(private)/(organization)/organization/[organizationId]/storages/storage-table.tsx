@@ -10,14 +10,14 @@ import Link from "next/link";
 import {cn} from "@/lib/utils";
 import {buttonVariants} from "@/components/ui/button";
 import {useParams} from "next/navigation";
-import {DeleteStorage} from "@/app/(private)/(organization)/organization/[organizationId]/storages/delete-storage";
+import {DeleteStorage} from "./delete-storage";
 
 type Props = {
   entities: { key: string, value: any, type: string }[],
   organizationId: string,
 }
 
-const columns: ColumnDef<{ key: string, value: any, type: string }>[] = [
+const columns: ColumnDef<{ key: string, value: any }>[] = [
   {
     accessorKey: "key",
     header: "key",
@@ -25,9 +25,9 @@ const columns: ColumnDef<{ key: string, value: any, type: string }>[] = [
       return (
         <div className="flex items-center gap-2">
           {
-            storage.type === "PERSISTENT" ?
-              <Icons.storagePersist className="h-4 w-4"/> :
-              <Icons.storageTemp className="h-4 w-4"/>
+            storage.key.startsWith('tmp:') ?
+              <Icons.storageTemp className="h-4 w-4"/> :
+              <Icons.storagePersist className="h-4 w-4"/>
           }
           <p>{storage.key}</p>
         </div>
@@ -52,7 +52,7 @@ const columns: ColumnDef<{ key: string, value: any, type: string }>[] = [
   }
 ]
 
-const OrgaStorageLink = ({storage}: { storage: { key: string, value: any, type: string } }) => {
+const OrgaStorageLink = ({storage}: { storage: { key: string, value: any } }) => {
   const {organizationId} = useParams()
 
   return (

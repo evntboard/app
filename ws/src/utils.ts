@@ -1,9 +1,5 @@
-export const generatePersistentStorageKey = (organizationId: string) => {
-  return `organization:${organizationId}:storage:persistent`
-}
-
-export const generateTemporaryStorageKey = (organizationId: string) => {
-  return `organization:${organizationId}:storage:temporary`
+export const generateStorageKey = (organizationId: string) => {
+  return `organization:${organizationId}:storage`
 }
 
 export const generateModulesKey = (organizationId: string) => {

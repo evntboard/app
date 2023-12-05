@@ -8,8 +8,7 @@ import {
   generateModuleKeyChannel,
   generateModuleKeyChannelEject,
   generateModulesKey,
-  generatePersistentStorageKey,
-  generateTemporaryStorageKey
+  generateStorageKey
 } from '../utils'
 
 export const sessionRegister: SimpleJSONRPCMethod<{ clientId: string }> = async (rawParams, {clientId}) => {
@@ -104,8 +103,7 @@ export const sessionRegister: SimpleJSONRPCMethod<{ clientId: string }> = async 
   await redis.hset(modulesKey, clientId, `${params.data.code}:${params.data.name}`)
 
   redisSub.subscribe(generateModuleKeyChannel(module.organizationId, clientId))
-  redisSub.subscribe(generatePersistentStorageKey(module.organizationId))
-  redisSub.subscribe(generateTemporaryStorageKey(module.organizationId))
+  redisSub.subscribe(generateStorageKey(module.organizationId))
   redisSub.subscribe(generateModuleKeyChannel(module.organizationId, clientId))
   redisSub.subscribe(generateModuleKeyChannelEject(module.organizationId, clientId))
 

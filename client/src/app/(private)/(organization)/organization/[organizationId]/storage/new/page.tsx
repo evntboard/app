@@ -46,7 +46,6 @@ export default async function OrganizationModuleNewPage(props: Props) {
         defaultValues={{
           key: "",
           value: "",
-          type: "PERSISTENT"
         }}
         organizationId={props.params.organizationId}
       />

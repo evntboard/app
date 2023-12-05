@@ -127,6 +127,22 @@ func (c *VmWrapped) LoadVars() {
 		log.Printf("[%s] %s : Error trigger [%s] %s -> register moduleRequest\n", c.event.ID, c.event.Name, c.condition.TriggerID, c.condition.Trigger.Name)
 	}
 
+	// MODULES
+
+	modulesObj := c.vm.NewObject()
+
+	if err := modulesObj.Set("request", c.vmModuleCodeRequestCall); err != nil {
+		log.Printf("[%s] %s : Error trigger [%s] %s -> register tmpFile vmStorageTmpSet\n", c.event.ID, c.event.Name, c.condition.TriggerID, c.condition.Trigger.Name)
+	}
+
+	if err := modulesObj.Set("notify", c.vmModuleCodeNotifyCall); err != nil {
+		log.Printf("[%s] %s : Error trigger [%s] %s -> register tmpFile vmStorageTmpSet\n", c.event.ID, c.event.Name, c.condition.TriggerID, c.condition.Trigger.Name)
+	}
+
+	if err := c.vm.Set("modules", modulesObj); err != nil {
+		log.Printf("[%s] %s : Error trigger [%s] %s -> register moduleRequest\n", c.event.ID, c.event.Name, c.condition.TriggerID, c.condition.Trigger.Name)
+	}
+
 	// storage persistent
 
 	storagePersistent := c.vm.NewObject()
@@ -149,122 +165,6 @@ func (c *VmWrapped) LoadVars() {
 
 	if err := c.vm.Set("storage", storageObj); err != nil {
 		log.Printf("[%s] %s : Error trigger [%s] %s -> register moduleRequest\n", c.event.ID, c.event.Name, c.condition.TriggerID, c.condition.Trigger.Name)
-	}
-}
-
-func (c *VmWrapped) vmModuleNameRequestCall(moduleName string, moduleMethod string, params any) any {
-	moduleId, err := c.getModuleIdByCodeAndName(c.condition.Trigger.OrganizationId, moduleName, moduleName)
-	if err != nil {
-		panic(c.vm.NewGoError(fmt.Errorf("there is no %s connected !", moduleName)))
-	}
-
-	requestID := uuid.New().String()
-
-	channelRequest := fmt.Sprintf("organization:%s:module:%s", c.condition.Trigger.OrganizationId, moduleId)
-	channelResponse := fmt.Sprintf("organization:%s:module:%s:%s", c.condition.Trigger.OrganizationId, moduleId, requestID)
-
-	message := model.ModuleRequest{
-		Notification: false,
-		Channel:      channelResponse,
-		Method:       moduleMethod,
-		Params:       params,
-	}
-
-	responseChan := make(chan *model.ModuleResponse)
-
-	wg := &sync.WaitGroup{}
-
-	wg.Add(1)
-	go c.subscribeToChannel(channelResponse, responseChan, wg)
-	wg.Wait()
-
-	c.publishMessage(channelRequest, message)
-
-	// Récupérer la réponse du canal
-	response := <-responseChan
-
-	if response.Error != "" {
-		panic(c.vm.NewGoError(fmt.Errorf("Module %s method: %s error: %s", moduleName, moduleMethod, response.Error)))
-	}
-
-	return response.Result
-}
-
-func (c *VmWrapped) vmModuleNameNotifyCall(moduleName string, moduleMethod string, params any) {
-	moduleId, err := c.getModuleIdByCodeAndName(c.condition.Trigger.OrganizationId, moduleName, moduleName)
-	if err != nil {
-		panic(c.vm.NewGoError(fmt.Errorf("there is no %s connected !", moduleName)))
-	}
-
-	requestID := uuid.New().String()
-
-	channelRequest := fmt.Sprintf("organization:%s:module:%s", c.condition.Trigger.OrganizationId, moduleId)
-	channelResponse := fmt.Sprintf("organization:%s:module:%s:%s", c.condition.Trigger.OrganizationId, moduleId, requestID)
-
-	message := model.ModuleRequest{
-		Notification: true,
-		Channel:      channelResponse,
-		Method:       moduleMethod,
-		Params:       params,
-	}
-
-	responseChan := make(chan *model.ModuleResponse)
-
-	wg := &sync.WaitGroup{}
-
-	wg.Add(1)
-	go c.subscribeToChannel(channelResponse, responseChan, wg)
-	wg.Wait()
-
-	c.publishMessage(channelRequest, message)
-
-	// Récupérer la réponse du canal
-	response := <-responseChan
-
-	if response.Error != "" {
-		panic(c.vm.NewGoError(fmt.Errorf("Module %s method: %s error: %s", moduleName, moduleMethod, response.Error)))
-	}
-}
-
-func (c *VmWrapped) vmSleep(ms int) {
-	time.Sleep(time.Duration(ms) * time.Millisecond)
-}
-
-func (c *VmWrapped) vmLog(data ...any) {
-	if len(data) == 0 {
-		return
-	}
-
-	ctx := context.Background()
-
-	keyLog := fmt.Sprintf("event:%s:trigger:%s:log", c.event.ID, c.condition.TriggerID)
-
-	var jsonData []byte
-
-	if len(data) == 1 {
-		rawJson, err := json.MarshalIndent(data[0], "", "  ")
-
-		if err != nil {
-			fmt.Println("Error encoding to JSON:", err)
-			return
-		}
-
-		jsonData = rawJson
-	} else {
-		rawJson, err := json.MarshalIndent(data, "", "  ")
-
-		if err != nil {
-			fmt.Println("Error encoding to JSON:", err)
-			return
-		}
-
-		jsonData = rawJson
-	}
-
-	c.redisService.Client.RPush(ctx, keyLog, jsonData)
-
-	if err := c.redisService.Client.Publish(ctx, fmt.Sprintf("organization:%s:event:%s", c.condition.Trigger.OrganizationId, c.event.ID), nil).Err(); err != nil {
-		fmt.Println(err)
 	}
 }
 
@@ -319,7 +219,49 @@ func (c *VmWrapped) subscribeToChannel(channel string, responseChan chan<- *mode
 	close(responseChan)
 }
 
-func (c *VmWrapped) getModuleIdByCodeAndName(organizationId string, code string, name string) (string, error) {
+func (c *VmWrapped) vmSleep(ms int) {
+	time.Sleep(time.Duration(ms) * time.Millisecond)
+}
+
+func (c *VmWrapped) vmLog(data ...any) {
+	if len(data) == 0 {
+		return
+	}
+
+	ctx := context.Background()
+
+	keyLog := fmt.Sprintf("event:%s:trigger:%s:log", c.event.ID, c.condition.TriggerID)
+
+	var jsonData []byte
+
+	if len(data) == 1 {
+		rawJson, err := json.MarshalIndent(data[0], "", "  ")
+
+		if err != nil {
+			fmt.Println("Error encoding to JSON:", err)
+			return
+		}
+
+		jsonData = rawJson
+	} else {
+		rawJson, err := json.MarshalIndent(data, "", "  ")
+
+		if err != nil {
+			fmt.Println("Error encoding to JSON:", err)
+			return
+		}
+
+		jsonData = rawJson
+	}
+
+	c.redisService.Client.RPush(ctx, keyLog, jsonData)
+
+	if err := c.redisService.Client.Publish(ctx, fmt.Sprintf("organization:%s:event:%s", c.condition.Trigger.OrganizationId, c.event.ID), nil).Err(); err != nil {
+		fmt.Println(err)
+	}
+}
+
+func (c *VmWrapped) getModuleIdByName(organizationId string, name string) (string, error) {
 	ctx := context.Background()
 
 	res, err := c.redisService.Client.HGetAll(ctx, fmt.Sprintf("organization:%s:modules", organizationId)).Result()
@@ -328,12 +270,34 @@ func (c *VmWrapped) getModuleIdByCodeAndName(organizationId string, code string,
 	}
 
 	for k, v := range res {
-		if v == fmt.Sprintf("%s:%s", code, name) {
+		if strings.HasSuffix(v, fmt.Sprintf(":%s", name)) {
 			return k, nil
 		}
 	}
 
 	return "", fmt.Errorf("Aucune correspondance trouvée")
+}
+
+func (c *VmWrapped) getModuleIdsByCode(organizationId string, code string) ([]string, error) {
+	ctx := context.Background()
+
+	res, err := c.redisService.Client.HGetAll(ctx, fmt.Sprintf("organization:%s:modules", organizationId)).Result()
+	if err != nil {
+		return nil, err
+	}
+
+	var modulesId []string
+
+	for k, v := range res {
+		if strings.HasPrefix(v, fmt.Sprintf("%s:", code)) {
+			modulesId = append(modulesId, k)
+		}
+	}
+
+	if len(modulesId) == 0 {
+		return nil, fmt.Errorf("Aucune correspondance trouvée")
+	}
+	return modulesId, nil
 }
 
 func (c *VmWrapped) vmStoragePersistentSet(key string, value string) string {
@@ -366,4 +330,188 @@ func (c *VmWrapped) vmStoragePersistentGet(key string) string {
 	}
 
 	return res.Value
+}
+
+func (c *VmWrapped) vmModuleNameRequestCall(moduleName string, moduleMethod string, params any) any {
+	moduleId, err := c.getModuleIdByName(c.condition.Trigger.OrganizationId, moduleName)
+	if err != nil {
+		panic(c.vm.NewGoError(fmt.Errorf("there is no %s connected !", moduleName)))
+	}
+
+	requestID := uuid.New().String()
+
+	channelRequest := fmt.Sprintf("organization:%s:module:%s", c.condition.Trigger.OrganizationId, moduleId)
+	channelResponse := fmt.Sprintf("organization:%s:module:%s:%s", c.condition.Trigger.OrganizationId, moduleId, requestID)
+
+	message := model.ModuleRequest{
+		Notification: false,
+		Channel:      channelResponse,
+		Method:       moduleMethod,
+		Params:       params,
+	}
+
+	responseChan := make(chan *model.ModuleResponse)
+
+	wg := &sync.WaitGroup{}
+
+	wg.Add(1)
+	go c.subscribeToChannel(channelResponse, responseChan, wg)
+	wg.Wait()
+
+	c.publishMessage(channelRequest, message)
+
+	// Récupérer la réponse du canal
+	response := <-responseChan
+
+	if response.Error != "" {
+		panic(c.vm.NewGoError(fmt.Errorf("Module %s method: %s error: %s", moduleName, moduleMethod, response.Error)))
+	}
+
+	return response.Result
+}
+
+func (c *VmWrapped) vmModuleNameNotifyCall(moduleName string, moduleMethod string, params any) {
+	moduleId, err := c.getModuleIdByName(c.condition.Trigger.OrganizationId, moduleName)
+	if err != nil {
+		panic(c.vm.NewGoError(fmt.Errorf("there is no %s connected !", moduleName)))
+	}
+
+	requestID := uuid.New().String()
+
+	channelRequest := fmt.Sprintf("organization:%s:module:%s", c.condition.Trigger.OrganizationId, moduleId)
+	channelResponse := fmt.Sprintf("organization:%s:module:%s:%s", c.condition.Trigger.OrganizationId, moduleId, requestID)
+
+	message := model.ModuleRequest{
+		Notification: true,
+		Channel:      channelResponse,
+		Method:       moduleMethod,
+		Params:       params,
+	}
+
+	responseChan := make(chan *model.ModuleResponse)
+
+	wg := &sync.WaitGroup{}
+
+	wg.Add(1)
+	go c.subscribeToChannel(channelResponse, responseChan, wg)
+	wg.Wait()
+
+	c.publishMessage(channelRequest, message)
+
+	// Récupérer la réponse du canal
+	response := <-responseChan
+
+	if response.Error != "" {
+		panic(c.vm.NewGoError(fmt.Errorf("Module %s method: %s error: %s", moduleName, moduleMethod, response.Error)))
+	}
+}
+
+func (c *VmWrapped) vmModuleCodeRequestCall(moduleCode string, moduleMethod string, params any) []any {
+	moduleIds, err := c.getModuleIdsByCode(c.condition.Trigger.OrganizationId, moduleCode)
+	if err != nil {
+		panic(c.vm.NewGoError(fmt.Errorf("there is no %s connected !", moduleCode)))
+	}
+
+	var wg sync.WaitGroup
+	responseChan := make(chan *model.ModuleResponse, len(moduleIds))
+
+	for _, moduleId := range moduleIds {
+		wg.Add(1)
+		go func(moduleId string) {
+			defer wg.Done()
+
+			requestID := uuid.New().String()
+
+			channelRequest := fmt.Sprintf("organization:%s:module:%s", c.condition.Trigger.OrganizationId, moduleId)
+			channelResponse := fmt.Sprintf("organization:%s:module:%s:%s", c.condition.Trigger.OrganizationId, moduleId, requestID)
+
+			message := model.ModuleRequest{
+				Notification: false,
+				Channel:      channelResponse,
+				Method:       moduleMethod,
+				Params:       params,
+			}
+
+			wg2 := &sync.WaitGroup{}
+			wg.Add(1)
+			go c.subscribeToChannel(channelResponse, responseChan, wg2)
+			wg.Wait()
+
+			c.publishMessage(channelRequest, message)
+		}(moduleId)
+	}
+
+	wg.Wait()
+
+	close(responseChan)
+
+	var responses []model.ModuleResponse
+	for response := range responseChan {
+		responses = append(responses, *response)
+	}
+
+	for _, response := range responses {
+		if response.Error != "" {
+			panic(c.vm.NewGoError(fmt.Errorf("Module %s method: %s error: %s", moduleCode, moduleMethod, response.Error)))
+		}
+	}
+
+	var results []any
+	for _, response := range responses {
+		results = append(results, response.Result)
+	}
+
+	return results
+}
+
+func (c *VmWrapped) vmModuleCodeNotifyCall(moduleCode string, moduleMethod string, params []any) {
+	moduleIds, err := c.getModuleIdsByCode(c.condition.Trigger.OrganizationId, moduleCode)
+	if err != nil {
+		panic(c.vm.NewGoError(fmt.Errorf("there is no %s connected !", moduleCode)))
+	}
+
+	var wg sync.WaitGroup
+	responseChan := make(chan *model.ModuleResponse, len(moduleIds))
+
+	for _, moduleId := range moduleIds {
+		wg.Add(1)
+		go func(moduleId string) {
+			defer wg.Done()
+
+			requestID := uuid.New().String()
+
+			channelRequest := fmt.Sprintf("organization:%s:module:%s", c.condition.Trigger.OrganizationId, moduleId)
+			channelResponse := fmt.Sprintf("organization:%s:module:%s:%s", c.condition.Trigger.OrganizationId, moduleId, requestID)
+
+			message := model.ModuleRequest{
+				Notification: true,
+				Channel:      channelResponse,
+				Method:       moduleMethod,
+				Params:       params,
+			}
+
+			wg2 := &sync.WaitGroup{}
+
+			wg2.Add(1)
+			go c.subscribeToChannel(channelResponse, responseChan, wg2)
+			wg2.Wait()
+
+			c.publishMessage(channelRequest, message)
+		}(moduleId)
+	}
+
+	wg.Wait()
+
+	close(responseChan)
+
+	var responses []model.ModuleResponse
+	for response := range responseChan {
+		responses = append(responses, *response)
+	}
+
+	for _, response := range responses {
+		if response.Error != "" {
+			panic(c.vm.NewGoError(fmt.Errorf("Module %s method: %s error: %s", moduleCode, moduleMethod, response.Error)))
+		}
+	}
 }

@@ -9,6 +9,18 @@ export async function getStorageByUserIdAndOrganizationIdAndKey(organizationId: 
     return Promise.reject("no access")
   }
 
+  if (storageKey.startsWith('tmp:')) {
+    const data = await redis.hget(`organization:${organizationId}:storage`, storageKey)
+
+    if (!data) {
+      return null
+    }
+    return ({
+      key: storageKey,
+      value: JSON.parse(data ?? "")
+    })
+  }
+
   const persistent = await db.storage.findFirst({
     select: {
       key: true,
@@ -34,25 +46,14 @@ export async function getStorageByUserIdAndOrganizationIdAndKey(organizationId: 
     }
   })
 
-  if (persistent) {
-    return {
-      type: "PERSISTENT",
-      key: persistent.key,
-      value: persistent.value
-    }
+  if (!persistent) {
+    return null
   }
 
-  const data = await redis.hget(`organization:${organizationId}:storage`, storageKey)
-
-  if (data) {
-    return ({
-      type: "TEMPORARY",
-      key: storageKey,
-      value: JSON.parse(data ?? "")
-    })
+  return {
+    key: persistent.key,
+    value: persistent.value
   }
-
-  return null
 }
 
 export async function getStorageByUserIdAndOrganizationId(organizationId: string, userId: string, storageId: string) {

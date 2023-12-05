@@ -12,10 +12,8 @@ import {
 
 import {eventNew} from './methods/eventNew'
 import {sessionRegister} from './methods/sessionRegister'
-import {storagePersistentGet} from './methods/storagePersistentGet'
-import {storagePersistentSet} from './methods/storagePersistentSet'
-import {storageTemporarySet} from "./methods/storageTemporarySet";
-import {storageTemporaryGet} from "./methods/storageTemporaryGet";
+import {storageGet} from './methods/storageGet'
+import {storageSet} from './methods/storageSet'
 
 import {redis, redisSub} from './redis'
 import {clients} from './sessions'
@@ -23,8 +21,7 @@ import {
   generateModuleKeyChannel,
   generateModuleKeyChannelEject,
   generateModulesKey,
-  generatePersistentStorageKey,
-  generateTemporaryStorageKey
+  generateStorageKey
 } from './utils'
 import {APP_PORT} from './constant'
 
@@ -32,10 +29,8 @@ const server = new JSONRPCServer<{ clientId: string }>()
 
 server.addMethod('session.register', sessionRegister)
 server.addMethod('event.new', eventNew)
-server.addMethod('storage.temporary.set', storageTemporarySet)
-server.addMethod('storage.temporary.get', storageTemporaryGet)
-server.addMethod('storage.persistent.set', storagePersistentSet)
-server.addMethod('storage.persistent.get', storagePersistentGet)
+server.addMethod('storage.set', storageSet)
+server.addMethod('storage.get', storageGet)
 
 const wss = new WebSocketServer({port: APP_PORT, path: '/module'})
 
@@ -90,8 +85,7 @@ wss.on('connection', async (ws: WebSocket) => {
       await redis.hdel(generateModulesKey(client.organizationId), clientId)
 
       redisSub.unsubscribe(generateModuleKeyChannel(client.organizationId, clientId))
-      redisSub.unsubscribe(generatePersistentStorageKey(client.organizationId))
-      redisSub.unsubscribe(generateTemporaryStorageKey(client.organizationId))
+      redisSub.unsubscribe(generateStorageKey(client.organizationId))
       redisSub.unsubscribe(generateModuleKeyChannel(client.organizationId, clientId))
       redisSub.unsubscribe(generateModuleKeyChannelEject(client.organizationId, clientId))
     }
@@ -133,10 +127,9 @@ redisSub.on('message', async (channel, raw) => {
   const [, organizationId, type, ...rest] = channel.split(':')
 
   switch (type) {
-    // `organization:${organizationId}:storage:${storageType}`
+    // `organization:${organizationId}:storage`
     // persistent || temporary
     case 'storage': {
-      const [storageType] = rest
       const message: { key: string, value: string } = JSON.parse(raw)
 
       const clientsObj = Object.fromEntries(clients.entries())
@@ -147,7 +140,7 @@ redisSub.on('message', async (channel, raw) => {
           clientsObj[clientId]?.organizationId === organizationId &&
           clientsObj[clientId]?.subs.includes(message.key)
         ) {
-          clientsObj[clientId]?.rpc?.notify?.(`storage.${storageType}.sync`, message)
+          clientsObj[clientId]?.rpc?.notify?.(`storage.sync`, message)
         }
       }
       break
