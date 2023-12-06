@@ -1,10 +1,11 @@
 "use client"
 
+import * as React from "react";
 import {ColumnDef} from "@tanstack/react-table";
 
 import {DataTable} from "@/components/data-table";
-import * as React from "react";
-import {Button} from "@/components/ui/button";
+
+import {EjectModule} from "./eject-module";
 
 const columnsProcess: ColumnDef<any>[] = [
   {
@@ -12,30 +13,17 @@ const columnsProcess: ColumnDef<any>[] = [
     header: "Session",
   },
   {
-    accessorKey: "name",
-    header: "Name",
-  },
-  {
     accessorKey: "code",
     header: "Code",
   },
   {
+    accessorKey: "name",
+    header: "Name",
+  },
+  {
     id: "action",
     header: "",
-    cell: ({ row: { original }}) => {
-      const handleOnClick = () => {
-        console.log("EJECT", original)
-      }
-
-      return (
-        <Button
-          variant="destructive"
-          onClick={handleOnClick}
-        >
-          Eject
-        </Button>
-      )
-    }
+    cell: ({row: {original}}) => <EjectModule session={original} />
   }
 ]
 

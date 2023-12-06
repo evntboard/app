@@ -25,7 +25,9 @@ export default async function OrganizationModuleByIdPage(props: Props) {
     redirect(authOptions?.pages?.signIn || "/login")
   }
 
-  const storageData = await getStorageByUserIdAndOrganizationIdAndKey(props.params.organizationId, user.id, props.params.storageKey)
+  const decodedKey = decodeURIComponent(props.params.storageKey)
+
+  const storageData = await getStorageByUserIdAndOrganizationIdAndKey(props.params.organizationId, user.id, decodedKey)
 
   if (!storageData) {
     return notFound()
@@ -36,11 +38,11 @@ export default async function OrganizationModuleByIdPage(props: Props) {
       <div className="flex justify-between">
         <h1 className="font-heading text-xl flex gap-2 items-center">
           {
-            storageData.type === "PERSISTENT" ?
+            storageData.key.startsWith('tmp:') ?
               <Icons.storagePersist className="h-5 w-5"/> :
               <Icons.storageTemp className="h-5 w-5"/>
           }
-          Storage {props.params.storageKey}
+          Storage {decodedKey}
         </h1>
         <div className="flex items-center gap-2">
           <Link

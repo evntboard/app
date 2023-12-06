@@ -33,36 +33,49 @@ export async function DELETE(
       return NextResponse.json({error: 'Unauthorized'}, {status: 403})
     }
 
+    if (params.storageKey.startsWith('tmp:')) {
+      const storageKeys = await redis.hkeys(`organization:${params.organizationId}:storage`)
+      const existInRedis = storageKeys.includes(params.storageKey)
+
+      if (!existInRedis) {
+        return NextResponse.json({error: 'Unauthorized'}, {status: 404})
+      }
+
+      await redis.hdel(`organization:${params.organizationId}:storage`, params.storageKey)
+
+      redis.publish(`organization:${params.organizationId}:storage`, JSON.stringify({
+        key: params.storageKey,
+        value: null
+      }))
+
+      return new Response(null, {status: 204})
+    }
+
     const storageCount = await db.storage.count({
       where: {
         key: params.storageKey,
         organizationId: params.organizationId,
       },
     })
-
-    const storageKeys = await redis.hkeys(`organization:${params.organizationId}:storage`)
-
     const existInStorage = storageCount > 0
-    const existInRedis = storageKeys.includes(params.storageKey)
 
-    if (!existInStorage && !existInRedis) {
-      return NextResponse.json({error: 'This key does not exist !'}, {status: 500})
+    if (!existInStorage) {
+      return NextResponse.json({error: 'Unauthorized'}, {status: 404})
     }
 
-    if (existInRedis) {
-      await redis.hdel(`organization:${params.organizationId}:storage`, params.storageKey)
-    }
+    await db.storage.delete({
+      where: {
+        key_organizationId: {
+          key: params.storageKey,
+          organizationId: params.organizationId
+        }
+      },
+    })
 
-    if (existInStorage) {
-      await db.storage.delete({
-        where: {
-          key_organizationId: {
-            key: params.storageKey,
-            organizationId: params.organizationId
-          }
-        },
-      })
-    }
+    redis.publish(`organization:${params.organizationId}:storage`, JSON.stringify({
+      key: params.storageKey,
+      value: null
+    }))
 
     return new Response(null, {status: 204})
   } catch (error) {

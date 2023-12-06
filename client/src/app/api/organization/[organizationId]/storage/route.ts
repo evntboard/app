@@ -32,74 +32,59 @@ export async function POST(req: Request, context: z.infer<typeof routeContextSch
     const json = await req.json()
 
     const storageSchema = z.object({
-      key: z.string(),
-      type: z.string(),
+      key: z.string().min(3),
       value: z.any(),
     })
 
     const body = storageSchema.parse(json)
 
-    if (body.key === 'new') {
+    if (body.key === 'new' || body.key === 'tmp:new') {
       return NextResponse.json({error: 'new cannot be a key name !'}, {status: 422})
     }
 
-    switch (body.type) {
-      case 'TEMPORARY': {
-        // verify if key don't exist on storage DB
-        const exist = await db.storage.count({
-          where: {
-            key: body.key,
-            organizationId: params.organizationId,
-          },
-        })
+    if (body.key.startsWith('tmp:')) {
 
-        if (exist > 0) {
-          return NextResponse.json({error: 'This key is on PERSISTENT !'}, {status: 422})
-        }
+      await redis.hset(`organization:${params.organizationId}:storage`, body.key, JSON.stringify(body.value))
+      const data = await redis.hget(`organization:${params.organizationId}:storage`, body.key)
 
-        await redis.hset(`organization:${params.organizationId}:storage`, body.key, JSON.stringify(body.value))
-        const data = await redis.hget(`organization:${params.organizationId}:storage`, body.key)
+      redis.publish(`organization:${params.organizationId}:storage`, JSON.stringify({
+        key: body.key,
+        value: JSON.parse(data ?? '')
+      }))
 
-        return NextResponse.json({
-          key: body.key,
-          value: JSON.parse(data ?? ""),
-          type: 'TEMPORARY'
-        })
-      }
-      case 'PERSISTENT': {
-        // verify if key don't exist on redis
-        const exist = await redis.hget(`organization:${params.organizationId}:storage`, body.key)
-
-        if (exist !== null) {
-          return NextResponse.json({error: 'This key is on TEMPORARY !'}, {status: 422})
-        }
-
-        const entity = await db.storage.upsert({
-          where: {
-            key_organizationId: {
-              key: body.key,
-              organizationId: params.organizationId,
-            }
-          },
-          update: {
-            value: body.value,
-            organizationId: params.organizationId,
-          },
-          create: {
-            key: body.key,
-            value: body.value,
-            organizationId: params.organizationId,
-          },
-        })
-        return NextResponse.json({
-          key: entity.key,
-          value: entity.value,
-          type: 'PERSISTENT'
-        })
-      }
-      default:
-        return NextResponse.json({error: 'UNKNOWN type storage'}, {status: 500})
+      return NextResponse.json({
+        key: body.key,
+        value: JSON.parse(data ?? ""),
+      })
     }
+
+    const entity = await db.storage.upsert({
+      where: {
+        key_organizationId: {
+          key: body.key,
+          organizationId: params.organizationId,
+        }
+      },
+      update: {
+        value: body.value,
+        organizationId: params.organizationId,
+      },
+      create: {
+        key: body.key,
+        value: body.value,
+        organizationId: params.organizationId,
+      },
+    })
+
+    redis.publish(`organization:${params.organizationId}:storage`, JSON.stringify({
+      key: entity.key,
+      value: entity.value
+    }))
+
+    return NextResponse.json({
+      key: entity.key,
+      value: entity.value,
+    })
   } catch (error) {
     console.log(error)
     if (error instanceof z.ZodError) {

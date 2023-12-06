@@ -32,7 +32,6 @@ export const StorageForm = ({organizationId, defaultValues, isCreating = false}:
     defaultValues: {
       key: defaultValues.key,
       value: JSON.stringify(defaultValues.value, undefined, 2),
-      type: defaultValues.type,
     },
   })
 
@@ -46,7 +45,6 @@ export const StorageForm = ({organizationId, defaultValues, isCreating = false}:
         json: {
           key: data.key,
           value: JSON.parse(data.value),
-          type: data.type,
         }
       })
 
@@ -91,32 +89,6 @@ export const StorageForm = ({organizationId, defaultValues, isCreating = false}:
         className={cn('flex flex-col gap-2 px-1')}
         onSubmit={form.handleSubmit(onSubmit)}
       >
-        {
-          isCreating && (
-            <FormField
-              control={form.control}
-              name="type"
-              render={({field}) => (
-                <FormItem className="flex-1">
-                  <FormLabel>Type</FormLabel>
-                  <Select onValueChange={field.onChange} value={field.value}>
-                    <FormControl>
-                      <SelectTrigger>
-                        <SelectValue placeholder="Select a type"/>
-                      </SelectTrigger>
-                    </FormControl>
-                    <SelectContent>
-                      <SelectItem value="PERSISTENT">Persistent</SelectItem>
-                      <SelectItem value="TEMPORARY">Temporary</SelectItem>
-                    </SelectContent>
-                  </Select>
-                  <FormDescription></FormDescription>
-                  <FormMessage/>
-                </FormItem>
-              )}
-            />
-          )
-        }
         <FormField
           control={form.control}
           name="key"

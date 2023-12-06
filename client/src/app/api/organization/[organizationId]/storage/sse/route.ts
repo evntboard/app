@@ -4,7 +4,7 @@ import {getServerSession} from "next-auth/next";
 import Redis from "ioredis";
 
 import {authOptions} from "@/lib/auth";
-import {redis, redisConfig} from "@/lib/redis";
+import {redisConfig} from "@/lib/redis";
 import {userHasWriteAccessToOrganization} from "@/lib/db/user";
 
 const routeContextSchema = z.object({
