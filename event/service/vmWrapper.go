@@ -261,7 +261,7 @@ func (c *VmWrapped) vmLog(data ...any) {
 	}
 }
 
-func (c *VmWrapped) getModuleIdByName(organizationId string, name string) (string, error) {
+func (c *VmWrapped) getModuleIdByName(organizationId string, nameOrCode string) (string, error) {
 	ctx := context.Background()
 
 	res, err := c.redisService.Client.HGetAll(ctx, fmt.Sprintf("organization:%s:modules", organizationId)).Result()
@@ -270,7 +270,13 @@ func (c *VmWrapped) getModuleIdByName(organizationId string, name string) (strin
 	}
 
 	for k, v := range res {
-		if strings.HasSuffix(v, fmt.Sprintf(":%s", name)) {
+		if strings.HasSuffix(v, fmt.Sprintf(":%s", nameOrCode)) {
+			return k, nil
+		}
+	}
+
+	for k, v := range res {
+		if strings.HasPrefix(v, fmt.Sprintf("%s:", nameOrCode)) {
 			return k, nil
 		}
 	}
@@ -400,6 +406,10 @@ func (c *VmWrapped) vmModuleNameNotifyCall(moduleName string, moduleMethod strin
 
 	// Récupérer la réponse du canal
 	response := <-responseChan
+
+	if response == nil {
+		panic(c.vm.NewGoError(fmt.Errorf("Module %s method: %s don't reply with good format ...", moduleName, moduleMethod)))
+	}
 
 	if response.Error != "" {
 		panic(c.vm.NewGoError(fmt.Errorf("Module %s method: %s error: %s", moduleName, moduleMethod, response.Error)))

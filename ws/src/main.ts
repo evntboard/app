@@ -154,7 +154,9 @@ redisSub.on('message', async (channel, raw) => {
         if (message.notification) {
           try {
             client?.rpc?.notify?.(message?.method, message?.params)
-            redis.publish(message?.channel, JSON.stringify(null))
+            redis.publish(message?.channel, JSON.stringify({
+              result: null
+            }))
           } catch (e: unknown) {
             if (e instanceof Error) {
               redis.publish(message?.channel, JSON.stringify({
@@ -168,6 +170,8 @@ redisSub.on('message', async (channel, raw) => {
               ?.rpc
               ?.timeout(2_000)
               ?.request?.(message?.method, message?.params)
+
+            console.log(message, result)
 
             redis.publish(message?.channel, JSON.stringify({
               result

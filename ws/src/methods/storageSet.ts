@@ -38,9 +38,14 @@ export const storageSet: SimpleJSONRPCMethod<{ clientId: string }> = async (rawP
     await redis.hset(`organization:${client.organizationId}:storage`, params.data.key, JSON.stringify(params.data.value))
     const data = await redis.hget(`organization:${client.organizationId}:storage`, params.data.key)
 
-    // TODO PUBLISH
+    const parsedData = JSON.parse(data ?? "")
 
-    return JSON.parse(data ?? "")
+    redis.publish(`organization:${client.organizationId}:storage`, JSON.stringify({
+      key: params.data.key,
+      value: parsedData
+    }))
+
+    return
   } else {
     const entity = await prisma.storage.upsert({
       where: {
@@ -60,8 +65,10 @@ export const storageSet: SimpleJSONRPCMethod<{ clientId: string }> = async (rawP
       },
     })
 
-
-    // TODO PUBLISH
+    redis.publish(`organization:${client.organizationId}:storage`, JSON.stringify({
+      key: params.data.key,
+      value: entity.value
+    }))
 
     return entity.value
   }

@@ -1,8 +1,8 @@
 import * as z from "zod"
 
 export const moduleSchema = z.object({
-  name: z.string(),
   code: z.string(),
+  name: z.string(),
   params: z.array(
     z.object({
       id: z.string().optional(),
