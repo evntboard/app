@@ -40,13 +40,23 @@ export const ModuleForm = ({organizationId, defaultValues}: Props) => {
     setIsSaving(true)
 
     try {
-      await ky.post(`/api/organization/${organizationId}/module`, {
-        json: {
-          name: data.name,
-          code: data.code,
-          params: data.params
-        }
-      })
+      if (data.id) {
+        await ky.patch(`/api/organization/${organizationId}/module/${data.id}`, {
+          json: {
+            name: data.name,
+            code: data.code,
+            params: data.params
+          }
+        })
+      } else {
+        await ky.post(`/api/organization/${organizationId}/module`, {
+          json: {
+            name: data.name,
+            code: data.code,
+            params: data.params
+          }
+        })
+      }
 
       toast({
         description: "module sent",
