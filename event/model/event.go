@@ -3,13 +3,12 @@ package model
 import "time"
 
 type Event struct {
-	ID             string    `json:"id"`
-	OrganizationId string    `json:"organizationId"`
-	Name           string    `json:"name"`
-	Payload        any       `json:"payload"`
-	EmittedAt      time.Time `json:"emitted_at"`
-	EmitterCode    string    `json:"emitter_code"`
-	EmitterName    string    `json:"emitter_name"`
+	ID          string    `json:"id"`
+	Name        string    `json:"name"`
+	Payload     any       `json:"payload"`
+	EmittedAt   time.Time `json:"emitted_at"`
+	EmitterCode string    `json:"emitter_code"`
+	EmitterName string    `json:"emitter_name"`
 }
 
 type ModuleRequest struct {

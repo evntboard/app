@@ -22,7 +22,7 @@ export const addEvent = async (event: RealtimeEvent, organizationId: string) => 
       id: event.id,
       organizationId: event.organizationId,
       name: event.name,
-      payload: JSON.stringify(event.payload, null, 2),
+      payload: JSON.stringify(event.payload),
       emitter_code: event.emitter_code,
       emitter_name: event.emitter_name,
       emitted_at: event.emitted_at,

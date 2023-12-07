@@ -2,10 +2,12 @@ package service
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"github.com/evntboard/app/event/model"
 	"github.com/evntboard/app/event/utils"
 	"log"
+	"strings"
 	"time"
 )
 
@@ -47,28 +49,48 @@ func (c *EventsManagerService) StartProcessEvents() {
 	}
 }
 
-func (c *EventsManagerService) unwrapEvent(ctx context.Context, eventId string) {
-	eventJson, err := c.redisService.Client.HGetAll(ctx, eventId).Result()
+func (c *EventsManagerService) unwrapEvent(ctx context.Context, eventKey string) {
+	eventMap, err := c.redisService.Client.HGetAll(ctx, eventKey).Result()
 	if err != nil {
 		fmt.Println("Error retrieving data from Redis:", err)
 		return
 	}
 
-	emittedAt, _ := time.Parse(time.RFC3339Nano, eventJson["emitted_at"])
-
-	event := &model.Event{
-		ID:             eventJson["id"],
-		OrganizationId: eventJson["organizationId"],
-		Name:           eventJson["name"],
-		Payload:        eventJson["payload"],
-		EmittedAt:      emittedAt,
-		EmitterCode:    eventJson["emitter_code"],
-		EmitterName:    eventJson["emitter_name"],
+	parts := strings.Split(eventKey, ":")
+	if len(parts) < 3 {
+		fmt.Println("eventKey have not the right format ...")
+		return
 	}
 
-	log.Printf("[%s] %s orga %s", event.ID, event.Name, event.OrganizationId)
+	organizationId := parts[2]
 
-	for _, condition := range c.triggerService.EventForTriggerCondition(event.Name, event.OrganizationId) {
+	var rawMessage json.RawMessage
+	if err := json.Unmarshal([]byte(eventMap["payload"]), &rawMessage); err != nil {
+		fmt.Println("Error unmarshaling JSON:", err)
+		return
+	}
+
+	// Now, you can decide the appropriate structure and unmarshal the raw message later
+	var payload interface{}
+	if err := json.Unmarshal(rawMessage, &payload); err != nil {
+		fmt.Println("Error unmarshaling dynamicStruct:", err)
+		return
+	}
+
+	emittedAt, _ := time.Parse(time.RFC3339Nano, eventMap["emitted_at"])
+
+	event := &model.Event{
+		ID:          eventMap["id"],
+		Name:        eventMap["name"],
+		Payload:     payload,
+		EmittedAt:   emittedAt,
+		EmitterCode: eventMap["emitter_code"],
+		EmitterName: eventMap["emitter_name"],
+	}
+
+	log.Printf("[%s] %s orga %s", event.ID, event.Name, organizationId)
+
+	for _, condition := range c.triggerService.EventForTriggerCondition(event.Name, organizationId) {
 		go c.processEvent(event, condition)
 	}
 }
