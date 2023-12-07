@@ -230,7 +230,8 @@ func (c *VmWrapped) vmLog(data ...any) {
 
 	ctx := context.Background()
 
-	keyLog := fmt.Sprintf("event:%s:trigger:%s:log", c.event.ID, c.condition.TriggerID)
+	logKey := utils.GKeyOrgaEventTriggerLog(c.condition.Trigger.OrganizationId, c.event.ID, c.condition.TriggerID)
+	eventChannel := utils.GChOrgaEvent(c.condition.Trigger.OrganizationId, c.event.ID)
 
 	var jsonData []byte
 
@@ -254,9 +255,9 @@ func (c *VmWrapped) vmLog(data ...any) {
 		jsonData = rawJson
 	}
 
-	c.redisService.Client.RPush(ctx, keyLog, jsonData)
+	c.redisService.Client.RPush(ctx, logKey, jsonData)
 
-	if err := c.redisService.Client.Publish(ctx, fmt.Sprintf("organization:%s:event:%s", c.condition.Trigger.OrganizationId, c.event.ID), nil).Err(); err != nil {
+	if err := c.redisService.Client.Publish(ctx, eventChannel, nil).Err(); err != nil {
 		fmt.Println(err)
 	}
 }
@@ -264,7 +265,9 @@ func (c *VmWrapped) vmLog(data ...any) {
 func (c *VmWrapped) getModuleIdByName(organizationId string, nameOrCode string) (string, error) {
 	ctx := context.Background()
 
-	res, err := c.redisService.Client.HGetAll(ctx, fmt.Sprintf("organization:%s:modules", organizationId)).Result()
+	modulesKey := utils.GKeyOrgaModules(organizationId)
+
+	res, err := c.redisService.Client.HGetAll(ctx, modulesKey).Result()
 	if err != nil {
 		return "", err
 	}
@@ -287,7 +290,9 @@ func (c *VmWrapped) getModuleIdByName(organizationId string, nameOrCode string) 
 func (c *VmWrapped) getModuleIdsByCode(organizationId string, code string) ([]string, error) {
 	ctx := context.Background()
 
-	res, err := c.redisService.Client.HGetAll(ctx, fmt.Sprintf("organization:%s:modules", organizationId)).Result()
+	modulesKey := utils.GKeyOrgaModules(organizationId)
+
+	res, err := c.redisService.Client.HGetAll(ctx, modulesKey).Result()
 	if err != nil {
 		return nil, err
 	}
@@ -314,14 +319,14 @@ func (c *VmWrapped) vmStoragePersistentSet(key string, value string) string {
 		panic(c.vm.NewGoError(fmt.Errorf("Storage %s error: %s", key, err.Error())))
 	}
 
-	channel := fmt.Sprintf("organization:%s:storage", c.condition.Trigger.OrganizationId)
+	storageChannel := utils.GChOrgaStorage(c.condition.Trigger.OrganizationId)
 
 	messageJSON, err := json.Marshal(map[string]string{"key": key, "value": value})
 	if err != nil {
 		log.Println("Erreur de codage JSON de la requête:", err)
 	}
 
-	if err = c.redisService.Client.Publish(ctx, channel, messageJSON).Err(); err != nil {
+	if err = c.redisService.Client.Publish(ctx, storageChannel, messageJSON).Err(); err != nil {
 		fmt.Println("ICI", err)
 	}
 
@@ -346,12 +351,12 @@ func (c *VmWrapped) vmModuleNameRequestCall(moduleName string, moduleMethod stri
 
 	requestID := uuid.New().String()
 
-	channelRequest := fmt.Sprintf("organization:%s:module:%s", c.condition.Trigger.OrganizationId, moduleId)
-	channelResponse := fmt.Sprintf("organization:%s:module:%s:%s", c.condition.Trigger.OrganizationId, moduleId, requestID)
+	requestChannel := utils.GChOrgaModule(c.condition.Trigger.OrganizationId, moduleId)
+	responseChannel := utils.GChOrgaModuleRequest(c.condition.Trigger.OrganizationId, moduleId, requestID)
 
 	message := model.ModuleRequest{
 		Notification: false,
-		Channel:      channelResponse,
+		Channel:      responseChannel,
 		Method:       moduleMethod,
 		Params:       params,
 	}
@@ -361,10 +366,10 @@ func (c *VmWrapped) vmModuleNameRequestCall(moduleName string, moduleMethod stri
 	wg := &sync.WaitGroup{}
 
 	wg.Add(1)
-	go c.subscribeToChannel(channelResponse, responseChan, wg)
+	go c.subscribeToChannel(responseChannel, responseChan, wg)
 	wg.Wait()
 
-	c.publishMessage(channelRequest, message)
+	c.publishMessage(requestChannel, message)
 
 	// Récupérer la réponse du canal
 	response := <-responseChan
@@ -384,12 +389,12 @@ func (c *VmWrapped) vmModuleNameNotifyCall(moduleName string, moduleMethod strin
 
 	requestID := uuid.New().String()
 
-	channelRequest := fmt.Sprintf("organization:%s:module:%s", c.condition.Trigger.OrganizationId, moduleId)
-	channelResponse := fmt.Sprintf("organization:%s:module:%s:%s", c.condition.Trigger.OrganizationId, moduleId, requestID)
+	requestChannel := utils.GChOrgaModule(c.condition.Trigger.OrganizationId, moduleId)
+	responseChannel := utils.GChOrgaModuleRequest(c.condition.Trigger.OrganizationId, moduleId, requestID)
 
 	message := model.ModuleRequest{
 		Notification: true,
-		Channel:      channelResponse,
+		Channel:      responseChannel,
 		Method:       moduleMethod,
 		Params:       params,
 	}
@@ -399,10 +404,10 @@ func (c *VmWrapped) vmModuleNameNotifyCall(moduleName string, moduleMethod strin
 	wg := &sync.WaitGroup{}
 
 	wg.Add(1)
-	go c.subscribeToChannel(channelResponse, responseChan, wg)
+	go c.subscribeToChannel(responseChannel, responseChan, wg)
 	wg.Wait()
 
-	c.publishMessage(channelRequest, message)
+	c.publishMessage(requestChannel, message)
 
 	// Récupérer la réponse du canal
 	response := <-responseChan
@@ -432,22 +437,22 @@ func (c *VmWrapped) vmModuleCodeRequestCall(moduleCode string, moduleMethod stri
 
 			requestID := uuid.New().String()
 
-			channelRequest := fmt.Sprintf("organization:%s:module:%s", c.condition.Trigger.OrganizationId, moduleId)
-			channelResponse := fmt.Sprintf("organization:%s:module:%s:%s", c.condition.Trigger.OrganizationId, moduleId, requestID)
+			requestChannel := utils.GChOrgaModule(c.condition.Trigger.OrganizationId, moduleId)
+			responseChannel := utils.GChOrgaModuleRequest(c.condition.Trigger.OrganizationId, moduleId, requestID)
 
 			message := model.ModuleRequest{
 				Notification: false,
-				Channel:      channelResponse,
+				Channel:      responseChannel,
 				Method:       moduleMethod,
 				Params:       params,
 			}
 
 			wg2 := &sync.WaitGroup{}
 			wg.Add(1)
-			go c.subscribeToChannel(channelResponse, responseChan, wg2)
+			go c.subscribeToChannel(responseChannel, responseChan, wg2)
 			wg.Wait()
 
-			c.publishMessage(channelRequest, message)
+			c.publishMessage(requestChannel, message)
 		}(moduleId)
 	}
 
@@ -490,12 +495,12 @@ func (c *VmWrapped) vmModuleCodeNotifyCall(moduleCode string, moduleMethod strin
 
 			requestID := uuid.New().String()
 
-			channelRequest := fmt.Sprintf("organization:%s:module:%s", c.condition.Trigger.OrganizationId, moduleId)
-			channelResponse := fmt.Sprintf("organization:%s:module:%s:%s", c.condition.Trigger.OrganizationId, moduleId, requestID)
+			requestChannel := utils.GChOrgaModule(c.condition.Trigger.OrganizationId, moduleId)
+			responseChannel := utils.GChOrgaModuleRequest(c.condition.Trigger.OrganizationId, moduleId, requestID)
 
 			message := model.ModuleRequest{
 				Notification: true,
-				Channel:      channelResponse,
+				Channel:      responseChannel,
 				Method:       moduleMethod,
 				Params:       params,
 			}
@@ -503,10 +508,10 @@ func (c *VmWrapped) vmModuleCodeNotifyCall(moduleCode string, moduleMethod strin
 			wg2 := &sync.WaitGroup{}
 
 			wg2.Add(1)
-			go c.subscribeToChannel(channelResponse, responseChan, wg2)
+			go c.subscribeToChannel(responseChannel, responseChan, wg2)
 			wg2.Wait()
 
-			c.publishMessage(channelRequest, message)
+			c.publishMessage(requestChannel, message)
 		}(moduleId)
 	}
 

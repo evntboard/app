@@ -24,6 +24,10 @@ export const gChOrgaEvents = (organizationId: string): string => {
   return `ch:organization:${organizationId}:events`
 }
 
+export const gChOrgaEvent = (organizationId: string, eventId: string): string => {
+  return `ch:organization:${organizationId}:event:${eventId}`
+}
+
 export const gChOrgaStorage = (organizationId: string): string => {
   return `ch:organization:${organizationId}:storage`
 }
