@@ -21,7 +21,6 @@ export const addEvent = async (event: RealtimeEvent, organizationId: string) => 
     eventKey,
     {
       id: event.id,
-      organizationId: event.organizationId,
       name: event.name,
       payload: JSON.stringify(event.payload),
       emitter_code: event.emitter_code,
@@ -40,7 +39,6 @@ export const getEvent = async (eventKey: string): Promise<RealtimeEvent> => {
 
   return {
     id: data.id,
-    organizationId: data.organizationId,
     name: data.name,
     payload: jsonParse(data?.payload ?? ""),
     emitter_name: data.emitter_name,
