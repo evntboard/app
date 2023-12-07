@@ -124,6 +124,12 @@ export const RealTimeEventTable = (props: { events: RealtimeEvent[], organizatio
         getRowCanExpand={({original}) => !!original.payload}
         columns={columns}
         data={events}
+        defaultSorting={[
+          {
+            "id": "emitted_at",
+            "desc": true
+          }
+        ]}
       />
     </div>
   )

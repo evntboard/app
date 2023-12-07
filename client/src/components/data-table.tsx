@@ -1,9 +1,19 @@
 "use client"
 import React, {Fragment, useRef, useState} from 'react'
 import {useVirtual} from '@tanstack/react-virtual'
-import {ColumnDef, ExpandedState, flexRender, getCoreRowModel, Row, useReactTable} from "@tanstack/react-table"
+import {
+  ColumnDef,
+  ExpandedState,
+  flexRender,
+  getCoreRowModel,
+  getSortedRowModel,
+  Row,
+  SortingState,
+  useReactTable
+} from "@tanstack/react-table"
 
 import {Table, TableBody, TableCell, TableHead, TableHeader, TableRow,} from "@/components/ui/table"
+import {Icons} from "@/components/icons";
 
 interface DataTableProps<TData, TValue> {
   columns: ColumnDef<TData, TValue>[]
@@ -11,7 +21,8 @@ interface DataTableProps<TData, TValue> {
   getRowId?: ((originalRow: TData, index: number, parent?: Row<TData> | undefined) => string) | undefined,
   getRowCanExpand?: (row: Row<TData>) => boolean,
   renderSubComponent?: (props: { row: Row<TData> }) => React.ReactElement,
-  singleExpand?: boolean
+  singleExpand?: boolean,
+  defaultSorting?: SortingState
 }
 
 export function DataTable<TData, TValue>({
@@ -20,9 +31,11 @@ export function DataTable<TData, TValue>({
                                            getRowCanExpand,
                                            getRowId,
                                            renderSubComponent,
-                                           singleExpand
+                                           singleExpand,
+                                           defaultSorting
                                          }: DataTableProps<TData, TValue>) {
   const [expanded, setExpanded] = useState<ExpandedState>({})
+  const [sorting, setSorting] = useState<SortingState>(defaultSorting ?? [])
 
   const onExpandedChange = (fnc: any) => {
     if (singleExpand) {
@@ -39,11 +52,14 @@ export function DataTable<TData, TValue>({
   const table = useReactTable({
     state: {
       expanded,
+      sorting,
     },
+    onSortingChange: setSorting,
     onExpandedChange: onExpandedChange,
     data,
     columns,
     getCoreRowModel: getCoreRowModel(),
+    getSortedRowModel: getSortedRowModel(),
     getRowCanExpand,
     getRowId: getRowId
   })
@@ -72,13 +88,27 @@ export function DataTable<TData, TValue>({
             <TableRow key={headerGroup.id} className="sticky top-0">
               {headerGroup.headers.map((header) => {
                 return (
-                  <TableHead key={header.id}>
-                    {header.isPlaceholder
-                      ? null
-                      : flexRender(
-                        header.column.columnDef.header,
-                        header.getContext()
-                      )}
+                  <TableHead
+                    key={header.id}
+                    {...{
+                      className: header.column.getCanSort()
+                        ? 'cursor-pointer select-none'
+                        : '',
+                      onClick: header.column.getToggleSortingHandler(),
+                    }}
+                  >
+                    <div className="flex gap-2 justify-between items-center">
+                      {header.isPlaceholder
+                        ? null
+                        : flexRender(
+                          header.column.columnDef.header,
+                          header.getContext()
+                        )}
+                      {{
+                        asc: <Icons.sortDown />,
+                        desc: <Icons.sortUp />,
+                      }[header.column.getIsSorted() as string] ?? null}
+                    </div>
                   </TableHead>
                 )
               })}
