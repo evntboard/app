@@ -4,72 +4,84 @@ import (
 	"context"
 	"fmt"
 	"github.com/redis/go-redis/v9"
-	"sync"
 	"time"
 )
 
 type Debounce struct {
-	redisClient *redis.Client
 	key         string
 	timeout     time.Duration
-	mu          sync.Mutex
+	redisClient *redis.Client
+	lock        *ChannelLock
 }
 
-func NewDebounce(redis *redis.Client, key string, timeout time.Duration) *Debounce {
+func NewDebounce(redisClient *redis.Client, key string, timeout time.Duration) *Debounce {
 	return &Debounce{
-		redisClient: redis,
+		lock:        NewChannelLock(redisClient, fmt.Sprintf("%s:lock", key), timeout),
+		redisClient: redisClient,
 		key:         key,
 		timeout:     timeout,
 	}
 }
 
 func (d *Debounce) ScheduleAction(action func(), cancelAction func()) {
-	d.mu.Lock()
-	defer d.mu.Unlock()
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Minute)
+	defer cancel()
 
-	if d.timeout > 0 {
-		// If a timeout is specified, schedule the action for later
-		go func() {
-			time.Sleep(d.timeout)
-			d.executeAction(action)
-		}()
-	} else {
-		// If no timeout is specified, execute the action immediately
-		d.executeAction(action)
-	}
-}
+	// cancel others !
+	d.redisClient.Publish(ctx, fmt.Sprintf("%s:cancel", d.key), "")
 
-func (d *Debounce) executeAction(action func()) {
-	cancelledKey := d.key + ":cancelled"
-	d.mu.Lock()
-	defer d.mu.Unlock()
+	pubsub := d.redisClient.Subscribe(ctx, fmt.Sprintf("%s:cancel", d.key))
+	defer pubsub.Close()
 
-	// Check if the action has been cancelled
-	cancelled, err := d.redisClient.Get(context.Background(), cancelledKey).Bool()
-	if err != nil && err != redis.Nil {
-		fmt.Printf("Error getting cancellation status from Redis: %v\n", err)
-		return
-	}
-
-	if !cancelled {
-		// Execute the action only if it has not been cancelled
-		action()
-
-		// Reset the cancellation status
-		err = d.redisClient.Set(context.Background(), cancelledKey, false, 0).Err()
+	select {
+	case <-ctx.Done():
+		cancelAction()
+	case <-pubsub.Channel():
+		cancelAction()
+	case <-time.After(d.timeout):
+		err := d.lock.Lock(ctx)
 		if err != nil {
-			fmt.Printf("Error resetting cancellation status in Redis: %v\n", err)
+			cancelAction()
+			break
 		}
-	}
-}
+		defer d.lock.Unlock(ctx)
 
-func (d *Debounce) CancelAction() {
-	d.mu.Lock()
-	defer d.mu.Unlock()
+		lastExecutionTime, err := d.redisClient.Get(ctx, d.key).Result()
+		if err != nil && err != redis.Nil {
+			fmt.Printf("Error getting last execution time from Redis: %v\n", err)
+			cancelAction()
+			break
+		}
 
-	// Set the cancellation status to true
-	err := d.redisClient.Set(context.Background(), d.key+":cancelled", true, 0).Err()
-	if err != nil {
-		fmt.Printf("Error setting cancellation status in Redis: %v\n", err)
+		if lastExecutionTime == "" {
+			currentTime := time.Now().Format(time.RFC3339Nano)
+			err = d.lock.redisClient.Set(ctx, d.key, currentTime, 0).Err()
+			if err != nil {
+				fmt.Printf("Error recording execution time to Redis: %v\n", err)
+				cancelAction()
+				break
+			}
+
+			action()
+			return
+		}
+
+		lastTime, err := time.Parse(time.RFC3339Nano, lastExecutionTime)
+		if err != nil {
+			fmt.Printf("Error parsing last execution time: %v\n", err)
+			cancelAction()
+			return
+		}
+
+		if time.Since(lastTime) >= d.timeout {
+			currentTime := time.Now().Format(time.RFC3339Nano)
+			err = d.redisClient.Set(ctx, d.key, currentTime, 0).Err()
+			if err != nil {
+				fmt.Printf("Error recording execution time to Redis: %v\n", err)
+				cancelAction()
+				return
+			}
+			action()
+		}
 	}
 }

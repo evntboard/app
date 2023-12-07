@@ -85,19 +85,27 @@ func (c *EventsManagerService) processEvent(event *model.Event, condition *model
 
 	switch condition.Type {
 	case "THROTTLE":
-		currentTimeout := time.Duration(condition.Timeout) * time.Millisecond
-		throttle := utils.NewThrottle(c.redisService.Client, condition.TriggerID+":"+condition.Name, currentTimeout)
+		throttle := utils.NewThrottle(
+			c.redisService.Client,
+			condition.TriggerID+":"+condition.Name,
+			time.Duration(condition.Timeout)*time.Millisecond,
+		)
 
-		if throttle.ShouldExecute() {
-			throttle.RecordExecutionTime()
-			c.process(wvm)
-		} else {
-			c.endEventProcess(event, condition)
-		}
+		throttle.ScheduleAction(
+			func() {
+				c.process(wvm)
+			},
+			func() {
+				c.endEventProcess(event, condition)
+			},
+		)
 
 	case "DEBOUNCE":
-		currentTimeout := time.Duration(condition.Timeout) * time.Millisecond
-		debounce := utils.NewDebounce(c.redisService.Client, condition.TriggerID+":"+condition.Name, currentTimeout)
+		debounce := utils.NewDebounce(
+			c.redisService.Client,
+			condition.TriggerID+":"+condition.Name,
+			time.Duration(condition.Timeout)*time.Millisecond,
+		)
 
 		debounce.ScheduleAction(
 			func() {

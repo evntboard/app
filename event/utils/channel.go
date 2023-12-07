@@ -22,7 +22,7 @@ func NewChannelLock(redisClient *redis.Client, lockKey string, timeout time.Dura
 	}
 }
 
-func (c *ChannelLock) Lock(ctx context.Context, value string) error {
+func (c *ChannelLock) Lock(ctx context.Context) error {
 	chResult := make(chan bool)
 
 	ctx, cancel := context.WithTimeout(ctx, c.timeout)
@@ -35,7 +35,7 @@ func (c *ChannelLock) Lock(ctx context.Context, value string) error {
 				chResult <- false
 				return
 			default:
-				lockAcquired, err := c.redisClient.SetNX(ctx, c.lockKey, value, 0).Result()
+				lockAcquired, err := c.redisClient.SetNX(ctx, c.lockKey, "", 0).Result()
 
 				if err != nil {
 					fmt.Printf("Erreur lors de l'acquisition du verrou : %v\n", err)
@@ -59,7 +59,6 @@ func (c *ChannelLock) Lock(ctx context.Context, value string) error {
 }
 
 func (c *ChannelLock) Unlock(ctx context.Context) error {
-	// Libération du verrou
 	_, err := c.redisClient.Del(ctx, c.lockKey).Result()
 	return err
 }
