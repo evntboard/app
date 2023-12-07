@@ -83,7 +83,7 @@ func (c *VmWrapped) LockChannel() {
 
 	if trimTriggerChannel != "" {
 		c.channelLock = utils.NewChannelLock(c.redisService.Client, trimTriggerChannel, 30*time.Minute)
-		if err := c.channelLock.Lock(context.Background(), c.condition.Trigger.ID); err != nil {
+		if err := c.channelLock.Lock(context.Background()); err != nil {
 			fmt.Println("LOCK ERROR " + err.Error())
 		}
 	}
