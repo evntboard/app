@@ -33,11 +33,11 @@ export const gChOrgaStorage = (organizationId: string): string => {
 }
 
 export const gChOrgaModule = (organizationId: string, sessionId: string): string => {
-  return `organization:${organizationId}:module:${sessionId}`
+  return `ch:organization:${organizationId}:module:${sessionId}`
 }
 
 export const gChOrgaModuleRequest = (organizationId: string, sessionId: string, requestId: string): string => {
-  return `organization:${organizationId}:module:${sessionId}:${requestId}`
+  return `ch:organization:${organizationId}:module:${sessionId}:${requestId}`
 }
 
 export const gChOrgaModuleEject = (organizationId: string, sessionId: string): string => {

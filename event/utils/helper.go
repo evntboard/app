@@ -37,7 +37,7 @@ func GChOrgaModule(organizationID, sessionID string) string {
 }
 
 func GChOrgaModuleRequest(organizationID, sessionID, requestID string) string {
-	return fmt.Sprintf("organization:%s:module:%s:%s", organizationID, sessionID, requestID)
+	return fmt.Sprintf("ch:organization:%s:module:%s:%s", organizationID, sessionID, requestID)
 }
 
 func GChOrgaModuleEject(organizationID, sessionID string) string {

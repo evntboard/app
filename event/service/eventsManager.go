@@ -62,7 +62,7 @@ func (c *EventsManagerService) unwrapEvent(ctx context.Context, eventKey string)
 		return
 	}
 
-	organizationId := parts[2]
+	organizationId := parts[1]
 
 	var rawMessage json.RawMessage
 	if err := json.Unmarshal([]byte(eventMap["payload"]), &rawMessage); err != nil {

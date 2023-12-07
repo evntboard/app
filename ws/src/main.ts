@@ -116,6 +116,7 @@ wss.on('connection', async (ws: WebSocket) => {
 
 // global listener on pub sub !
 redisSub.on('message', async (channel, raw) => {
+  console.log(channel, raw)
   // `ch:organization:${organizationId}:XXXX`
   // [ "ch","organization", organizationId, type
   const [, , organizationId, type, ...rest] = channel.split(':')
