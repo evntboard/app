@@ -90,7 +90,7 @@ export const getEventProcessAndLogById = async (organizationId: string, eventId:
   )
 
   const triggersId = Array.from(new Set([...keysProcess, ...keysLogs])).map(key => {
-    const [, , , triggerId] = key.split(':')
+    const [, , , , , triggerId] = key.split(':')
     return triggerId
   })
 
@@ -107,7 +107,7 @@ export const getEventProcessAndLogById = async (organizationId: string, eventId:
   return triggers.map((trigger) => {
     const logs = dataLogs
       .filter((log) => {
-        const [, , , triggerId] = log.key.split(':')
+        const [, , , , , triggerId] = log.key.split(':')
         return triggerId === trigger.id
       })
       .map((log) => log.value)
@@ -115,7 +115,7 @@ export const getEventProcessAndLogById = async (organizationId: string, eventId:
 
     const process = dataProcess
       .find((log) => {
-        const [, , , triggerId] = log.key.split(':')
+        const [, , , , , triggerId] = log.key.split(':')
         return triggerId === trigger.id
       })
 
