@@ -4,6 +4,7 @@ import {storageGetSchema} from '../schema'
 import {clients} from '../sessions'
 import {redis} from '../redis'
 import {prisma} from "../prisma";
+import {gKeyOrgaStorage} from "../helper";
 
 export const storageGet: SimpleJSONRPCMethod<{ clientId: string }> = async (rawParams, {clientId}) => {
   if (!clients.has(clientId)) {
@@ -35,7 +36,7 @@ export const storageGet: SimpleJSONRPCMethod<{ clientId: string }> = async (rawP
   }
 
   if (params.data.key.startsWith('tmp:')) {
-    const storageTemp = await redis.hget(`organization:${client.organizationId}:storage`, params.data.key)
+    const storageTemp = await redis.hget(gKeyOrgaStorage(client.organizationId), params.data.key)
 
     if (!storageTemp) {
       throw new JSONRPCErrorException(

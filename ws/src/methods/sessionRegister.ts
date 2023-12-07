@@ -4,12 +4,7 @@ import {prisma} from '../prisma'
 import {redis, redisSub} from '../redis'
 import {sessionRegisterSchema} from '../schema'
 import {clients} from '../sessions'
-import {
-  generateModuleKeyChannel,
-  generateModuleKeyChannelEject,
-  generateModulesKey,
-  generateStorageKey
-} from '../utils'
+import {gChOrgaModule, gChOrgaModuleEject, gChOrgaStorage, gKeyOrgaModules} from "../helper";
 
 export const sessionRegister: SimpleJSONRPCMethod<{ clientId: string }> = async (rawParams, {clientId}) => {
   if (!clients.has(clientId)) {
@@ -65,7 +60,7 @@ export const sessionRegister: SimpleJSONRPCMethod<{ clientId: string }> = async 
     )
   }
 
-  const modulesKey = generateModulesKey(module.organizationId)
+  const modulesKey = gKeyOrgaModules(module.organizationId)
 
   const keyExist = await redis.hexists(modulesKey, clientId)
 
@@ -102,10 +97,9 @@ export const sessionRegister: SimpleJSONRPCMethod<{ clientId: string }> = async 
 
   await redis.hset(modulesKey, clientId, `${params.data.code}:${params.data.name}`)
 
-  redisSub.subscribe(generateModuleKeyChannel(module.organizationId, clientId))
-  redisSub.subscribe(generateStorageKey(module.organizationId))
-  redisSub.subscribe(generateModuleKeyChannel(module.organizationId, clientId))
-  redisSub.subscribe(generateModuleKeyChannelEject(module.organizationId, clientId))
+  redisSub.subscribe(gChOrgaModule(module.organizationId, clientId))
+  redisSub.subscribe(gChOrgaStorage(module.organizationId))
+  redisSub.subscribe(gChOrgaModuleEject(module.organizationId, clientId))
 
   return module.params
 }

@@ -4,7 +4,7 @@ import {JSONRPCErrorException, SimpleJSONRPCMethod} from 'json-rpc-2.0'
 import {redis} from '../redis'
 import {eventNewSchema} from '../schema'
 import {clients} from '../sessions'
-import {generateModulesKey} from '../utils'
+import {DATA_EVENTS, gChOrgaEvents, gKeyOrgaEvent, gKeyOrgaModules} from "../helper";
 
 export const eventNew: SimpleJSONRPCMethod<{ clientId: string }> = async (rawParams, {clientId}) => {
   if (!clients.has(clientId)) {
@@ -25,7 +25,7 @@ export const eventNew: SimpleJSONRPCMethod<{ clientId: string }> = async (rawPar
     )
   }
 
-  const keyExist = await redis.hexists(generateModulesKey(client.organizationId), clientId)
+  const keyExist = await redis.hexists(gKeyOrgaModules(client.organizationId), clientId)
 
   if (!keyExist) {
     return new JSONRPCErrorException(
@@ -55,12 +55,24 @@ export const eventNew: SimpleJSONRPCMethod<{ clientId: string }> = async (rawPar
     payload: params.data.payload
   }
 
-  await redis.set(`event:${event.id}`, JSON.stringify(event))
+  const eventKey = gKeyOrgaEvent(client.organizationId, event.id)
 
-  await redis.lpush(`organization:${client.organizationId}:event`, event.id)
-  await redis.lpush('event', event.id)
+  await redis.hset(
+    eventKey,
+    {
+      id: event.id,
+      organizationId: client.organizationId,
+      name: params.data.name,
+      payload: params.data.payload,
+      emitter_code: client.code,
+      emitter_name: client.name,
+      emitted_at: new Date().toISOString(),
+    }
+  )
 
-  await redis.publish(`organization:${client.organizationId}:event`, event.id)
+  await redis.lpush(DATA_EVENTS, eventKey);
+
+  await redis.publish(gChOrgaEvents(client.organizationId), eventKey);
 
   return event
 }

@@ -4,6 +4,7 @@ import {storageSetSchema} from '../schema'
 import {prisma} from '../prisma'
 import {clients} from '../sessions'
 import {redis} from '../redis'
+import {gChOrgaStorage, gKeyOrgaStorage} from "../helper";
 
 export const storageSet: SimpleJSONRPCMethod<{ clientId: string }> = async (rawParams, {clientId}) => {
   if (!clients.has(clientId)) {
@@ -34,13 +35,17 @@ export const storageSet: SimpleJSONRPCMethod<{ clientId: string }> = async (rawP
     )
   }
 
+  const storageChannel = gChOrgaStorage(client.organizationId)
+
   if (params.data.key.startsWith('tmp:')) {
-    await redis.hset(`organization:${client.organizationId}:storage`, params.data.key, JSON.stringify(params.data.value))
-    const data = await redis.hget(`organization:${client.organizationId}:storage`, params.data.key)
+    const storageKey = gKeyOrgaStorage(client.organizationId)
+
+    await redis.hset(storageKey, params.data.key, JSON.stringify(params.data.value))
+    const data = await redis.hget(storageKey, params.data.key)
 
     const parsedData = JSON.parse(data ?? "")
 
-    redis.publish(`organization:${client.organizationId}:storage`, JSON.stringify({
+    redis.publish(storageChannel, JSON.stringify({
       key: params.data.key,
       value: parsedData
     }))
@@ -65,7 +70,7 @@ export const storageSet: SimpleJSONRPCMethod<{ clientId: string }> = async (rawP
       },
     })
 
-    redis.publish(`organization:${client.organizationId}:storage`, JSON.stringify({
+    redis.publish(storageChannel, JSON.stringify({
       key: params.data.key,
       value: entity.value
     }))
