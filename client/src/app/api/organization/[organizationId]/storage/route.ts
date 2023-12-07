@@ -6,6 +6,7 @@ import {authOptions} from "@/lib/auth"
 import {db} from "@/lib/db"
 import {userHasWriteAccessToOrganization} from "@/lib/db/user";
 import {redis} from "@/lib/redis";
+import {gChOrgaStorage, gKeyOrgaStorage} from "@/lib/helper";
 
 const routeContextSchema = z.object({
   params: z.object({
@@ -42,12 +43,15 @@ export async function POST(req: Request, context: z.infer<typeof routeContextSch
       return NextResponse.json({error: 'new cannot be a key name !'}, {status: 422})
     }
 
+    const keyStorage = gKeyOrgaStorage(params.organizationId)
+    const channelStorage = gChOrgaStorage(params.organizationId)
+
     if (body.key.startsWith('tmp:')) {
 
-      await redis.hset(`organization:${params.organizationId}:storage`, body.key, JSON.stringify(body.value))
-      const data = await redis.hget(`organization:${params.organizationId}:storage`, body.key)
+      await redis.hset(keyStorage, body.key, JSON.stringify(body.value))
+      const data = await redis.hget(keyStorage, body.key)
 
-      redis.publish(`organization:${params.organizationId}:storage`, JSON.stringify({
+      redis.publish(channelStorage, JSON.stringify({
         key: body.key,
         value: JSON.parse(data ?? '')
       }))
@@ -76,7 +80,7 @@ export async function POST(req: Request, context: z.infer<typeof routeContextSch
       },
     })
 
-    redis.publish(`organization:${params.organizationId}:storage`, JSON.stringify({
+    redis.publish(channelStorage, JSON.stringify({
       key: entity.key,
       value: entity.value
     }))

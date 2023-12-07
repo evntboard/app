@@ -37,8 +37,8 @@ export async function GET(req: NextRequest, context: z.infer<typeof routeContext
       async start(controller) {
         souscripteur.on("message", (canal, message) => {
           if (canal === channel) {
-            redis.get(`event:${message}`).then((data) => {
-              controller.enqueue(`data:${data}\n\n`);
+            redis.hgetall(message).then((data) => {
+              controller.enqueue(`data:${JSON.stringify(data)}\n\n`);
             })
           }
         });

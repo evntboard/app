@@ -6,6 +6,7 @@ import {db} from "@/lib/db"
 import {authOptions} from "@/lib/auth";
 import {userHasWriteAccessToOrganization} from "@/lib/db/user";
 import {redis} from "@/lib/redis";
+import {gChOrgaStorage, gKeyOrgaStorage} from "@/lib/helper";
 
 const routeContextSchema = z.object({
   params: z.object({
@@ -33,17 +34,20 @@ export async function DELETE(
       return NextResponse.json({error: 'Unauthorized'}, {status: 403})
     }
 
+    const keyStorage = gKeyOrgaStorage(params.organizationId)
+    const channelStorage = gChOrgaStorage(params.organizationId)
+
     if (params.storageKey.startsWith('tmp:')) {
-      const storageKeys = await redis.hkeys(`organization:${params.organizationId}:storage`)
+      const storageKeys = await redis.hkeys(keyStorage)
       const existInRedis = storageKeys.includes(params.storageKey)
 
       if (!existInRedis) {
         return NextResponse.json({error: 'Unauthorized'}, {status: 404})
       }
 
-      await redis.hdel(`organization:${params.organizationId}:storage`, params.storageKey)
+      await redis.hdel(keyStorage, params.storageKey)
 
-      redis.publish(`organization:${params.organizationId}:storage`, JSON.stringify({
+      redis.publish(channelStorage, JSON.stringify({
         key: params.storageKey,
         value: null
       }))
@@ -72,7 +76,7 @@ export async function DELETE(
       },
     })
 
-    redis.publish(`organization:${params.organizationId}:storage`, JSON.stringify({
+    redis.publish(channelStorage, JSON.stringify({
       key: params.storageKey,
       value: null
     }))
