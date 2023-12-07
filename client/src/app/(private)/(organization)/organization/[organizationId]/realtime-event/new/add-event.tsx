@@ -9,7 +9,7 @@ import {zodResolver} from "@hookform/resolvers/zod";
 
 import {JsonValue} from "@prisma/client/runtime/library";
 
-import {cn} from "@/lib/utils";
+import {cn, jsonParse} from "@/lib/utils";
 import {toast} from "@/components/ui/use-toast";
 import {Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage} from "@/components/ui/form";
 import {Input} from "@/components/ui/input";
@@ -57,7 +57,7 @@ export const AddEvent = ({hasWriteAccess, organizationId, events}: Props) => {
       await ky.post(`/api/organization/${organizationId}/realtime-event`, {
         json: {
           name: data.name,
-          payload: JSON.parse(data.payload)
+          payload: jsonParse(data.payload)
         }
       })
 

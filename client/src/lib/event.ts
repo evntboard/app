@@ -11,6 +11,7 @@ import {
 
 import {RealtimeEvent} from "@/types/realtime-event";
 import {TriggerWithProcessData} from "@/types/trigger-process";
+import {jsonParse} from "@/lib/utils";
 
 export const addEvent = async (event: RealtimeEvent, organizationId: string) => {
 
@@ -41,7 +42,7 @@ export const getEvent = async (eventKey: string): Promise<RealtimeEvent> => {
     id: data.id,
     organizationId: data.organizationId,
     name: data.name,
-    payload: JSON.parse(data?.payload ?? ""),
+    payload: jsonParse(data?.payload ?? ""),
     emitter_name: data.emitter_name,
     emitter_code: data.emitter_code,
     emitted_at: data.emitted_at,

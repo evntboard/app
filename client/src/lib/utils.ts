@@ -29,3 +29,11 @@ export function generateToken(length: number = 64): string {
   }
   return result;
 }
+
+export function jsonParse(data: string): any {
+  try {
+    return JSON.parse(data)
+  } catch (e) {
+    return undefined
+  }
+}

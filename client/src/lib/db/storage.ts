@@ -2,6 +2,7 @@ import {db} from "@/lib/db";
 import {userHasReadAccessToOrganization} from "@/lib/db/user";
 import {redis} from "@/lib/redis";
 import {gKeyOrgaStorage} from "@/lib/helper";
+import {jsonParse} from "@/lib/utils";
 
 export async function getStorageByUserIdAndOrganizationIdAndKey(organizationId: string, userId: string, storageKey: string) {
   const hasAccess = await userHasReadAccessToOrganization(organizationId, userId)
@@ -16,9 +17,10 @@ export async function getStorageByUserIdAndOrganizationIdAndKey(organizationId: 
     if (!data) {
       return null
     }
+
     return ({
       key: storageKey,
-      value: JSON.parse(data ?? "")
+      value: jsonParse(data ?? "")
     })
   }
 
@@ -91,7 +93,7 @@ export async function getStoragesByUserIdAndOrganizationId(organizationId: strin
 
   const data = await redis.hgetall(gKeyOrgaStorage(organizationId))
 
-  const temporary = Object.entries(data).map(([key, value]) => ({key, value: JSON.parse(value)}))
+  const temporary = Object.entries(data).map(([key, value]) => ({key, value: jsonParse(value ?? "")}))
 
   return [...persistent, ...temporary]
 }
