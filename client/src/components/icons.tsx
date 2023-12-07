@@ -1,7 +1,7 @@
 import {
   AlertTriangle,
-  ArrowDownUp,
-  ArrowRight,
+  ArrowDownUp, ArrowDownWideNarrow,
+  ArrowRight, ArrowUpNarrowWide,
   Braces,
   Cable,
   Check,
@@ -131,5 +131,7 @@ export const Icons = {
   storageTemp: Clock,
   storagePersist: HardDrive,
   token: Key,
-  zoom: Expand
+  zoom: Expand,
+  sortDown: ArrowDownWideNarrow,
+  sortUp: ArrowUpNarrowWide,
 }
