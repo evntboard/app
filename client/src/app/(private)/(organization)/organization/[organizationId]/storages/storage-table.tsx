@@ -7,7 +7,7 @@ import {ColumnDef} from "@tanstack/react-table"
 import {DataTable} from "@/components/data-table";
 import {Icons} from "@/components/icons";
 import Link from "next/link";
-import {cn} from "@/lib/utils";
+import {cn, jsonParse} from "@/lib/utils";
 import {buttonVariants} from "@/components/ui/button";
 import {useParams} from "next/navigation";
 import {DeleteStorage} from "./delete-storage";
@@ -80,7 +80,7 @@ export const StorageTable = (props: Props) => {
 
     evtSource.addEventListener('message', ({data: raw}) => {
       try {
-        const data: { key: string, value: string } = JSON.parse(raw)
+        const data: { key: string, value: string } = jsonParse(raw)
         console.log(data)
         // setEntities((old) => {
         //   // console.log(old.filter(({id}) => id !== data.id))

@@ -11,6 +11,7 @@ import {DataTable} from "@/components/data-table";
 import * as React from "react";
 import {useEffect, useState} from "react";
 import { Badge } from "@/components/ui/badge";
+import {jsonParse} from "@/lib/utils";
 
 const columnsProcess: ColumnDef<TriggerWithProcessData>[] = [
   {
@@ -122,7 +123,7 @@ export const ProcessEvent = (props: Props) => {
 
     evtSource.addEventListener('message', ({ data: raw }) => {
       try {
-        const data = JSON.parse(raw)
+        const data = jsonParse(raw)
         setEvents(data)
       } catch (e) {
         console.error(`Invalid message: ${raw}`)

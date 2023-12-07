@@ -1,6 +1,5 @@
 export type RealtimeEvent = {
   id: string
-  organizationId: string
   name: string
   payload: object
   emitter_code: string

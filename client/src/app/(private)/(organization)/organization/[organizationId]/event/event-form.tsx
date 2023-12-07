@@ -9,7 +9,7 @@ import * as z from "zod";
 
 import {Button} from "@/components/ui/button";
 import {toast} from "@/components/ui/use-toast";
-import {cn} from "@/lib/utils";
+import {cn, jsonParse} from "@/lib/utils";
 import {Icons} from "@/components/icons";
 import {Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage} from "@/components/ui/form";
 import {Input} from "@/components/ui/input";
@@ -56,14 +56,14 @@ export const EventForm = ({organizationId, defaultValues}: Props) => {
         await ky.patch(`/api/organization/${organizationId}/event/${defaultValues.id}`, {
           json: {
             name: data.name,
-            payload: JSON.parse(data.payload),
+            payload: jsonParse(data.payload),
           }
         })
       } else {
         await ky.post(`/api/organization/${organizationId}/event`, {
           json: {
             name: data.name,
-            payload: JSON.parse(data.payload),
+            payload: jsonParse(data.payload),
           }
         })
       }

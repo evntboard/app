@@ -37,7 +37,6 @@ export async function POST(req: NextRequest, context: z.infer<typeof routeContex
 
     let event: RealtimeEvent = {
       id: uuid(),
-      organizationId: params.organizationId,
       name: body.name,
       payload: isObject(json.payload) ? json.payload : {},
       emitted_at: new Date().toISOString(),

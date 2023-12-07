@@ -7,7 +7,7 @@ import {format, parseISO} from "date-fns";
 import {ColumnDef} from "@tanstack/react-table"
 
 import {RealtimeEvent} from "@/types/realtime-event";
-import {cn} from "@/lib/utils";
+import {cn, jsonParse} from "@/lib/utils";
 import {DataTable} from "@/components/data-table";
 import {Button, buttonVariants} from "@/components/ui/button";
 import {Icons} from "@/components/icons";
@@ -86,7 +86,7 @@ export const RealTimeEventTable = (props: { events: RealtimeEvent[], organizatio
 
     evtSource.addEventListener('message', ({data: raw}) => {
       try {
-        const data = JSON.parse(raw)
+        const data = jsonParse(raw)
         setEvents((old) => [
           data,
           ...old

@@ -25,7 +25,7 @@ export default async function OrganizationEventByIdPage(props: Props) {
     redirect(authOptions?.pages?.signIn || "/login")
   }
 
-  const data = await getEventProcessAndLogById(props.params.eventId)
+  const data = await getEventProcessAndLogById(props.params.organizationId, props.params.eventId)
 
   return (
     <div className="flex flex-1 flex-col gap-2 overflow-hidden">

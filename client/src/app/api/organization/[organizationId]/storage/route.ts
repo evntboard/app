@@ -7,6 +7,7 @@ import {db} from "@/lib/db"
 import {userHasWriteAccessToOrganization} from "@/lib/db/user";
 import {redis} from "@/lib/redis";
 import {gChOrgaStorage, gKeyOrgaStorage} from "@/lib/helper";
+import {jsonParse} from "@/lib/utils";
 
 const routeContextSchema = z.object({
   params: z.object({
@@ -53,12 +54,12 @@ export async function POST(req: Request, context: z.infer<typeof routeContextSch
 
       redis.publish(channelStorage, JSON.stringify({
         key: body.key,
-        value: JSON.parse(data ?? '')
+        value: jsonParse(data ?? "")
       }))
 
       return NextResponse.json({
         key: body.key,
-        value: JSON.parse(data ?? ""),
+        value: jsonParse(data ?? ""),
       })
     }
 

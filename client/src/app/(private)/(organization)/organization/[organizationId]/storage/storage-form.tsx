@@ -8,7 +8,7 @@ import {zodResolver} from "@hookform/resolvers/zod";
 import * as z from "zod";
 
 import {storageSchema} from "@/lib/validations/storage";
-import {cn} from "@/lib/utils";
+import {cn, jsonParse} from "@/lib/utils";
 import {Button} from "@/components/ui/button";
 import {toast} from "@/components/ui/use-toast";
 import {Icons} from "@/components/icons";
@@ -44,7 +44,7 @@ export const StorageForm = ({organizationId, defaultValues, isCreating = false}:
       await ky.post(`/api/organization/${organizationId}/storage`, {
         json: {
           key: data.key,
-          value: JSON.parse(data.value),
+          value: jsonParse(data.value),
         }
       })
 

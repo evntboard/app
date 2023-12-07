@@ -50,7 +50,6 @@ export const eventNew: SimpleJSONRPCMethod<{ clientId: string }> = async (rawPar
     emitter_code: client.code,
     emitter_name: client.name,
     emitted_at: new Date().toISOString(),
-    organizationId: client.organizationId,
     name: params.data.name,
     payload: params.data.payload
   }
@@ -61,7 +60,6 @@ export const eventNew: SimpleJSONRPCMethod<{ clientId: string }> = async (rawPar
     eventKey,
     {
       id: event.id,
-      organizationId: client.organizationId,
       name: params.data.name,
       payload: JSON.stringify(params.data.payload),
       emitter_code: client.code,
