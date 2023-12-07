@@ -7,6 +7,7 @@ import {authOptions} from "@/lib/auth";
 import {redisConfig} from "@/lib/redis";
 import {userHasWriteAccessToOrganization} from "@/lib/db/user";
 import {getEventProcessAndLogById} from "@/lib/event";
+import {gChOrgaEvent} from "@/lib/helper";
 
 const routeContextSchema = z.object({
   params: z.object({
@@ -31,15 +32,15 @@ export async function GET(req: NextRequest, context: z.infer<typeof routeContext
       return NextResponse.json({error: 'Unauthorized'}, {status: 403})
     }
 
-    const channel = `organization:${params.organizationId}:event:${params.eventId}`
+    const eventChannel = gChOrgaEvent(params.organizationId, params.eventId)
 
     const souscripteur = new Redis(redisConfig);
 
     const stream = new ReadableStream({
       async start(controller) {
         souscripteur.on("message", (canal, message) => {
-          if (canal === channel) {
-            getEventProcessAndLogById(params.eventId)
+          if (canal === eventChannel) {
+            getEventProcessAndLogById(params.organizationId, params.eventId)
               .then((data) => {
                 controller.enqueue(`data:${JSON.stringify(data)}\n\n`);
               })
@@ -58,10 +59,10 @@ export async function GET(req: NextRequest, context: z.infer<typeof routeContext
           controller.close();
         });
 
-        souscripteur.subscribe(channel);
+        souscripteur.subscribe(eventChannel);
       },
       cancel() {
-        souscripteur.unsubscribe(channel);
+        souscripteur.unsubscribe(eventChannel);
         souscripteur.quit();
       },
     });

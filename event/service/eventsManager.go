@@ -7,6 +7,7 @@ import (
 	"github.com/evntboard/app/event/model"
 	"github.com/evntboard/app/event/utils"
 	"log"
+	"strings"
 	"time"
 )
 
@@ -38,7 +39,7 @@ func NewEventsManagerService(
 func (c *EventsManagerService) StartProcessEvents() {
 	ctx := context.Background()
 	for {
-		result, err := c.redisService.Client.BRPop(ctx, 0, "event").Result()
+		result, err := c.redisService.Client.BRPop(ctx, 0, utils.DataEvents).Result()
 		if err != nil {
 			fmt.Printf("Error dequeuing task: %v\n", err)
 			continue
@@ -48,23 +49,48 @@ func (c *EventsManagerService) StartProcessEvents() {
 	}
 }
 
-func (c *EventsManagerService) unwrapEvent(ctx context.Context, eventId string) {
-	eventJson, err := c.redisService.Client.Get(ctx, fmt.Sprintf("event:%s", eventId)).Result()
+func (c *EventsManagerService) unwrapEvent(ctx context.Context, eventKey string) {
+	eventMap, err := c.redisService.Client.HGetAll(ctx, eventKey).Result()
 	if err != nil {
 		fmt.Println("Error retrieving data from Redis:", err)
 		return
 	}
 
-	event := &model.Event{}
-
-	if err := json.Unmarshal([]byte(eventJson), event); err != nil {
-		fmt.Printf("[%s] Error decoding JSON: %v\n", eventId, err)
+	parts := strings.Split(eventKey, ":")
+	if len(parts) < 3 {
+		fmt.Println("eventKey have not the right format ...")
 		return
 	}
 
-	log.Printf("[%s] %s orga %s", event.ID, event.Name, event.OrganizationId)
+	organizationId := parts[1]
 
-	for _, condition := range c.triggerService.EventForTriggerCondition(event.Name, event.OrganizationId) {
+	var rawMessage json.RawMessage
+	if err := json.Unmarshal([]byte(eventMap["payload"]), &rawMessage); err != nil {
+		fmt.Println("Error unmarshaling JSON:", err)
+		return
+	}
+
+	// Now, you can decide the appropriate structure and unmarshal the raw message later
+	var payload interface{}
+	if err := json.Unmarshal(rawMessage, &payload); err != nil {
+		fmt.Println("Error unmarshaling dynamicStruct:", err)
+		return
+	}
+
+	emittedAt, _ := time.Parse(time.RFC3339Nano, eventMap["emitted_at"])
+
+	event := &model.Event{
+		ID:          eventMap["id"],
+		Name:        eventMap["name"],
+		Payload:     payload,
+		EmittedAt:   emittedAt,
+		EmitterCode: eventMap["emitter_code"],
+		EmitterName: eventMap["emitter_name"],
+	}
+
+	log.Printf("[%s] %s orga %s", event.ID, event.Name, organizationId)
+
+	for _, condition := range c.triggerService.EventForTriggerCondition(event.Name, organizationId) {
 		go c.processEvent(event, condition)
 	}
 }
@@ -148,8 +174,12 @@ func (c *EventsManagerService) process(wvm *VmWrapped) {
 
 func (c *EventsManagerService) reactionOkEventProcess(event *model.Event, condition *model.TriggerCondition) {
 	ctx := context.Background()
-	c.redisService.Client.HSet(ctx, fmt.Sprintf("event:%s:trigger:%s:process", event.ID, condition.TriggerID), map[string]string{"exec": "true"})
-	if err := c.redisService.Client.Publish(ctx, fmt.Sprintf("organization:%s:event:%s", condition.Trigger.OrganizationId, event.ID), nil).Err(); err != nil {
+
+	processKey := utils.GKeyOrgaEventTriggerProcess(condition.Trigger.OrganizationId, event.ID, condition.TriggerID)
+	eventCh := utils.GChOrgaEvent(condition.Trigger.OrganizationId, event.ID)
+
+	c.redisService.Client.HSet(ctx, processKey, map[string]string{"exec": "true"})
+	if err := c.redisService.Client.Publish(ctx, eventCh, nil).Err(); err != nil {
 		fmt.Println(err)
 	}
 
@@ -158,8 +188,12 @@ func (c *EventsManagerService) reactionOkEventProcess(event *model.Event, condit
 
 func (c *EventsManagerService) startEventProcess(event *model.Event, condition *model.TriggerCondition) {
 	ctx := context.Background()
-	c.redisService.Client.HSet(ctx, fmt.Sprintf("event:%s:trigger:%s:process", event.ID, condition.TriggerID), map[string]string{"start": time.Now().Format(time.RFC3339Nano), "exec": "false"})
-	if err := c.redisService.Client.Publish(ctx, fmt.Sprintf("organization:%s:event:%s", condition.Trigger.OrganizationId, event.ID), nil).Err(); err != nil {
+
+	processKey := utils.GKeyOrgaEventTriggerProcess(condition.Trigger.OrganizationId, event.ID, condition.TriggerID)
+	eventCh := utils.GChOrgaEvent(condition.Trigger.OrganizationId, event.ID)
+
+	c.redisService.Client.HSet(ctx, processKey, map[string]string{"start": time.Now().Format(time.RFC3339Nano), "exec": "false"})
+	if err := c.redisService.Client.Publish(ctx, eventCh, nil).Err(); err != nil {
 		fmt.Println(err)
 	}
 
@@ -168,8 +202,12 @@ func (c *EventsManagerService) startEventProcess(event *model.Event, condition *
 
 func (c *EventsManagerService) endEventProcess(event *model.Event, condition *model.TriggerCondition) {
 	ctx := context.Background()
-	c.redisService.Client.HSet(ctx, fmt.Sprintf("event:%s:trigger:%s:process", event.ID, condition.TriggerID), map[string]string{"end": time.Now().Format(time.RFC3339Nano)})
-	if err := c.redisService.Client.Publish(ctx, fmt.Sprintf("organization:%s:event:%s", condition.Trigger.OrganizationId, event.ID), nil).Err(); err != nil {
+
+	processKey := utils.GKeyOrgaEventTriggerProcess(condition.Trigger.OrganizationId, event.ID, condition.TriggerID)
+	eventCh := utils.GChOrgaEvent(condition.Trigger.OrganizationId, event.ID)
+
+	c.redisService.Client.HSet(ctx, processKey, map[string]string{"end": time.Now().Format(time.RFC3339Nano)})
+	if err := c.redisService.Client.Publish(ctx, eventCh, nil).Err(); err != nil {
 		fmt.Println(err)
 	}
 
@@ -178,8 +216,12 @@ func (c *EventsManagerService) endEventProcess(event *model.Event, condition *mo
 
 func (c *EventsManagerService) errorEventProcess(event *model.Event, condition *model.TriggerCondition, err error) {
 	ctx := context.Background()
-	c.redisService.Client.HSet(ctx, fmt.Sprintf("event:%s:trigger:%s:process", event.ID, condition.TriggerID), map[string]string{"end": time.Now().Format(time.RFC3339Nano), "error": err.Error()})
-	if err := c.redisService.Client.Publish(ctx, fmt.Sprintf("organization:%s:event:%s", condition.Trigger.OrganizationId, event.ID), nil).Err(); err != nil {
+
+	processKey := utils.GKeyOrgaEventTriggerProcess(condition.Trigger.OrganizationId, event.ID, condition.TriggerID)
+	eventCh := utils.GChOrgaEvent(condition.Trigger.OrganizationId, event.ID)
+
+	c.redisService.Client.HSet(ctx, processKey, map[string]string{"end": time.Now().Format(time.RFC3339Nano), "error": err.Error()})
+	if err := c.redisService.Client.Publish(ctx, eventCh, nil).Err(); err != nil {
 		fmt.Println(err)
 	}
 	log.Printf("[%s] %s : Error process [%s] %s\n", event.ID, event.Name, condition.Trigger.ID, condition.Trigger.Name)

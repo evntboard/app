@@ -6,6 +6,7 @@ import Redis from "ioredis";
 import {authOptions} from "@/lib/auth";
 import {redis, redisConfig} from "@/lib/redis";
 import {userHasWriteAccessToOrganization} from "@/lib/db/user";
+import {gChOrgaEvents} from "@/lib/helper";
 
 const routeContextSchema = z.object({
   params: z.object({
@@ -29,7 +30,7 @@ export async function GET(req: NextRequest, context: z.infer<typeof routeContext
       return NextResponse.json({error: 'Unauthorized'}, {status: 403})
     }
 
-    const channel = `organization:${params.organizationId}:event`
+    const channel = gChOrgaEvents(params.organizationId)
 
     const souscripteur = new Redis(redisConfig);
 
@@ -37,8 +38,8 @@ export async function GET(req: NextRequest, context: z.infer<typeof routeContext
       async start(controller) {
         souscripteur.on("message", (canal, message) => {
           if (canal === channel) {
-            redis.get(`event:${message}`).then((data) => {
-              controller.enqueue(`data:${data}\n\n`);
+            redis.hgetall(message).then((data) => {
+              controller.enqueue(`data:${JSON.stringify(data)}\n\n`);
             })
           }
         });

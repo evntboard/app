@@ -17,13 +17,8 @@ import {storageSet} from './methods/storageSet'
 
 import {redis, redisSub} from './redis'
 import {clients} from './sessions'
-import {
-  generateModuleKeyChannel,
-  generateModuleKeyChannelEject,
-  generateModulesKey,
-  generateStorageKey
-} from './utils'
 import {APP_PORT} from './constant'
+import {gChOrgaModule, gChOrgaModuleEject, gChOrgaStorage, gKeyOrgaModules} from "./helper";
 
 const server = new JSONRPCServer<{ clientId: string }>()
 
@@ -66,7 +61,7 @@ wss.on('connection', async (ws: WebSocket) => {
         return
       }
 
-      const value = await redis.hget(generateModulesKey(client.organizationId), clientId)
+      const value = await redis.hget(gKeyOrgaModules(client.organizationId), clientId)
       if (!value) {
         ws.close()
       }
@@ -82,12 +77,11 @@ wss.on('connection', async (ws: WebSocket) => {
         return
       }
 
-      await redis.hdel(generateModulesKey(client.organizationId), clientId)
+      await redis.hdel(gKeyOrgaModules(client.organizationId), clientId)
 
-      redisSub.unsubscribe(generateModuleKeyChannel(client.organizationId, clientId))
-      redisSub.unsubscribe(generateStorageKey(client.organizationId))
-      redisSub.unsubscribe(generateModuleKeyChannel(client.organizationId, clientId))
-      redisSub.unsubscribe(generateModuleKeyChannelEject(client.organizationId, clientId))
+      redisSub.unsubscribe(gChOrgaModule(client.organizationId, clientId))
+      redisSub.unsubscribe(gChOrgaStorage(client.organizationId))
+      redisSub.unsubscribe(gChOrgaModuleEject(client.organizationId, clientId))
     }
   })
 
@@ -122,12 +116,13 @@ wss.on('connection', async (ws: WebSocket) => {
 
 // global listener on pub sub !
 redisSub.on('message', async (channel, raw) => {
-  // `organization:${organizationId}:XXXX`
-  // [ "organization", organizationId, type
-  const [, organizationId, type, ...rest] = channel.split(':')
+  console.log(channel, raw)
+  // `ch:organization:${organizationId}:XXXX`
+  // [ "ch","organization", organizationId, type
+  const [, , organizationId, type, ...rest] = channel.split(':')
 
   switch (type) {
-    // `organization:${organizationId}:storage`
+    // `ch:oorganization:${organizationId}:storage`
     // persistent || temporary
     case 'storage': {
       const message: { key: string, value: string } = JSON.parse(raw)
@@ -145,7 +140,7 @@ redisSub.on('message', async (channel, raw) => {
       }
       break
     }
-    // `organization:${organizationId}:module:${clientId}`
+    // `ch:organization:${organizationId}:module:${clientId}`
     case 'module': {
       const [clientId] = rest
       if (clients.has(clientId)) {
@@ -187,7 +182,7 @@ redisSub.on('message', async (channel, raw) => {
       }
       break
     }
-    // `organization:${organizationId}:module-eject:${clientId}`
+    // `ch:organization:${organizationId}:module-eject:${clientId}`
     case 'module-eject': {
       const [clientId] = rest
       if (clients.has(clientId)) {

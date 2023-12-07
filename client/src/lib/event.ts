@@ -1,21 +1,51 @@
 import {redis} from "@/lib/redis";
 import {userHasReadAccessToOrganization} from "@/lib/db/user";
-import {RealtimeEvent} from "@/types/realtime-event";
 import {db} from "@/lib/db"
+import {
+  DATA_EVENTS,
+  gChOrgaEvents,
+  gKeyOrgaEvent,
+  gKeyOrgaEventTriggerLog,
+  gKeyOrgaEventTriggerProcess
+} from "@/lib/helper";
+
+import {RealtimeEvent} from "@/types/realtime-event";
 import {TriggerWithProcessData} from "@/types/trigger-process";
 
 export const addEvent = async (event: RealtimeEvent, organizationId: string) => {
-  await redis.set(`event:${event.id}`, JSON.stringify(event))
 
-  await redis.lpush(`organization:${organizationId}:event`, event.id);
-  await redis.lpush('event', event.id);
+  const eventKey = gKeyOrgaEvent(organizationId, event.id)
 
-  await redis.publish(`organization:${organizationId}:event`, event.id);
+  await redis.hset(
+    eventKey,
+    {
+      id: event.id,
+      organizationId: event.organizationId,
+      name: event.name,
+      payload: JSON.stringify(event.payload),
+      emitter_code: event.emitter_code,
+      emitter_name: event.emitter_name,
+      emitted_at: event.emitted_at,
+    }
+  )
+
+  await redis.lpush(DATA_EVENTS, eventKey);
+
+  await redis.publish(gChOrgaEvents(organizationId), eventKey);
 }
 
-export const getEvent = async (eventId: string): Promise<RealtimeEvent> => {
-  const data = await redis.get(`event:${eventId}`)
-  return data ? JSON.parse(data) : undefined
+export const getEvent = async (eventKey: string): Promise<RealtimeEvent> => {
+  const data = await redis.hgetall(eventKey)
+
+  return {
+    id: data.id,
+    organizationId: data.organizationId,
+    name: data.name,
+    payload: JSON.parse(data?.payload ?? ""),
+    emitter_name: data.emitter_name,
+    emitter_code: data.emitter_code,
+    emitted_at: data.emitted_at,
+  }
 }
 
 export const getEventsByOrganizationId = async (organizationId: string, userId: string): Promise<RealtimeEvent[]> => {
@@ -25,14 +55,18 @@ export const getEventsByOrganizationId = async (organizationId: string, userId: 
     return []
   }
 
-  const data = await redis.lrange(`organization:${organizationId}:event`, 0, 99)
+  const keys = await redis.keys(gKeyOrgaEvent(organizationId, '*'))
 
-  return await Promise.all(data.map(i => getEvent(i)))
+  return await Promise.all(
+    keys
+      .filter((k) => k.split(':').length === 4)
+      .map(i => getEvent(i))
+  )
 }
 
-export const getEventProcessAndLogById = async (eventId: string): Promise<TriggerWithProcessData[]> => {
-  const keysProcess = await redis.keys(`event:${eventId}:trigger:*:process`)
-  const keysLogs = await redis.keys(`event:${eventId}:trigger:*:log`)
+export const getEventProcessAndLogById = async (organizationId: string, eventId: string): Promise<TriggerWithProcessData[]> => {
+  const keysProcess = await redis.keys(gKeyOrgaEventTriggerProcess(organizationId, eventId, '*'))
+  const keysLogs = await redis.keys(gKeyOrgaEventTriggerLog(organizationId, eventId, '*'))
 
   const dataProcess = await Promise.all(
     keysProcess.map(async (key) => {

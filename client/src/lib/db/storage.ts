@@ -1,6 +1,7 @@
 import {db} from "@/lib/db";
 import {userHasReadAccessToOrganization} from "@/lib/db/user";
 import {redis} from "@/lib/redis";
+import {gKeyOrgaStorage} from "@/lib/helper";
 
 export async function getStorageByUserIdAndOrganizationIdAndKey(organizationId: string, userId: string, storageKey: string) {
   const hasAccess = await userHasReadAccessToOrganization(organizationId, userId)
@@ -10,7 +11,7 @@ export async function getStorageByUserIdAndOrganizationIdAndKey(organizationId: 
   }
 
   if (storageKey.startsWith('tmp:')) {
-    const data = await redis.hget(`organization:${organizationId}:storage`, storageKey)
+    const data = await redis.hget(gKeyOrgaStorage(organizationId), storageKey)
 
     if (!data) {
       return null
@@ -56,29 +57,6 @@ export async function getStorageByUserIdAndOrganizationIdAndKey(organizationId: 
   }
 }
 
-export async function getStorageByUserIdAndOrganizationId(organizationId: string, userId: string, storageId: string) {
-  return db.storage.findFirst({
-    where: {
-      id: storageId,
-      organizationId,
-      organization: {
-        OR: [
-          {
-            creatorId: userId,
-          },
-          {
-            users: {
-              some: {
-                userId
-              }
-            }
-          }
-        ]
-      }
-    }
-  })
-}
-
 export async function getStoragesByUserIdAndOrganizationId(organizationId: string, userId: string) {
   const hasAccess = await userHasReadAccessToOrganization(organizationId, userId)
 
@@ -111,12 +89,9 @@ export async function getStoragesByUserIdAndOrganizationId(organizationId: strin
   })
 
 
-  const data = await redis.hgetall(`organization:${organizationId}:storage`)
+  const data = await redis.hgetall(gKeyOrgaStorage(organizationId))
 
   const temporary = Object.entries(data).map(([key, value]) => ({key, value: JSON.parse(value)}))
 
-  return [
-    ...persistent.map((p) => ({...p, type: "PERSISTENT"})),
-    ...temporary.map((p) => ({...p, type: "TEMPORARY"})),
-  ]
+  return [...persistent, ...temporary]
 }

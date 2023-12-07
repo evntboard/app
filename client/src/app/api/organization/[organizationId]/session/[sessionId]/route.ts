@@ -5,6 +5,7 @@ import {NextResponse} from "next/server";
 import {authOptions} from "@/lib/auth";
 import {userHasWriteAccessToOrganization} from "@/lib/db/user";
 import {redis} from "@/lib/redis";
+import {gChOrgaModuleEject, gKeyOrgaModules} from "@/lib/helper";
 
 const routeContextSchema = z.object({
   params: z.object({
@@ -32,16 +33,18 @@ export async function DELETE(
       return NextResponse.json({error: 'Unauthorized'}, {status: 403})
     }
 
+    const modulesKey = gKeyOrgaModules(params.organizationId)
+
     // check if redis have this key !
-    const moduleSession = await redis.hget(`organization:${params.organizationId}:modules`, params.sessionId)
+    const moduleSession = await redis.hget(modulesKey, params.sessionId)
 
     if (!moduleSession) {
       return NextResponse.json({error: 'No module connected for this sessionId'}, {status: 500})
     }
 
-    await redis.hdel(`organization:${params.organizationId}:modules`, params.sessionId)
+    await redis.hdel(modulesKey, params.sessionId)
 
-    redis.publish(`organization:${params.organizationId}:module-eject:${params.sessionId}`, '')
+    redis.publish(gChOrgaModuleEject(params.organizationId, params.sessionId), '')
 
     return new Response(null, {status: 204})
   } catch (error) {
