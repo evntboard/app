@@ -13,7 +13,7 @@ import {useParams} from "next/navigation";
 import {DeleteStorage} from "./delete-storage";
 
 type Props = {
-  entities: { key: string, value: any, type: string }[],
+  entities: { key: string, value: any }[],
   organizationId: string,
 }
 
@@ -63,7 +63,7 @@ const OrgaStorageLink = ({storage}: { storage: { key: string, value: any } }) =>
       )}
     >
       <>
-        <Icons.create className="mr-2 h-4 w-4"/>
+        <Icons.edit className="mr-2 h-4 w-4"/>
         Edit
       </>
     </Link>

@@ -72,14 +72,14 @@ export const AddEvent = ({hasWriteAccess, organizationId, events}: Props) => {
           case 422:
             toast({
               title: "Provided data are not right",
-              description: "Your trigger was not created. Pro plan is required.",
+              description: "Your event was not sent.",
               variant: "destructive",
             })
             break;
           case 402:
             toast({
               title: "Something went wrong.",
-              description: "Your organization was not created. Pro plan is required.",
+              description: "Your event was not sent.",
               variant: "destructive",
             })
             break;
@@ -87,7 +87,7 @@ export const AddEvent = ({hasWriteAccess, organizationId, events}: Props) => {
       }
       toast({
         title: "Something went wrong.",
-        description: "Your organization was not created. Please try again.",
+        description: "Your event was not sent. Please try again.",
         variant: "destructive",
       })
     } finally {
@@ -134,7 +134,7 @@ export const AddEvent = ({hasWriteAccess, organizationId, events}: Props) => {
               <FormItem>
                 <FormLabel>Name</FormLabel>
                 <FormControl>
-                  <Input placeholder="/constants" {...field} />
+                  <Input placeholder="my-event" {...field} />
                 </FormControl>
                 <FormDescription></FormDescription>
                 <FormMessage/>
@@ -147,7 +147,7 @@ export const AddEvent = ({hasWriteAccess, organizationId, events}: Props) => {
               name="payload"
               render={({field}) => (
                 <FormItem>
-                  <FormLabel>Name</FormLabel>
+                  <FormLabel>Payload</FormLabel>
                   <FormControl>
                     <Editor
                       language='json'

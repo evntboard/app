@@ -106,7 +106,7 @@ export function TriggerForm({className, entity, organizationId, ...props}: Props
       const rez: Shared = await response.json()
 
       toast({
-        description: "Your trigger has been created.",
+        description: "Your trigger has been saved.",
       })
 
       if (!entity?.id) {
@@ -120,14 +120,14 @@ export function TriggerForm({className, entity, organizationId, ...props}: Props
           case 422:
             toast({
               title: "Provided data are not right",
-              description: "Your trigger was not created. Pro plan is required.",
+              description: "Your trigger was not saved.",
               variant: "destructive",
             })
             break;
           case 402:
             toast({
               title: "Something went wrong.",
-              description: "Your organization was not created. Pro plan is required.",
+              description: "Your trigger was not saved.",
               variant: "destructive",
             })
             break;
@@ -135,7 +135,7 @@ export function TriggerForm({className, entity, organizationId, ...props}: Props
       }
       toast({
         title: "Something went wrong.",
-        description: "Your organization was not created. Please try again.",
+        description: "Your trigger was not saved. Please try again.",
         variant: "destructive",
       })
     } finally {
@@ -328,7 +328,7 @@ export function TriggerForm({className, entity, organizationId, ...props}: Props
                           <FormControl>
                             <Input
                               type="number"
-                              placeholder="/constants"
+                              placeholder="0"
                               {...field}
                               onChange={(e) => {
                                 const number = parseInt(e.target.value, 10)

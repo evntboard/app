@@ -4,6 +4,7 @@ import * as React from "react";
 import {useState} from "react";
 import ky from "ky";
 import {useRouter} from "next/navigation";
+import {Organization} from "@prisma/client";
 
 import {Button} from "@/components/ui/button";
 import {
@@ -21,7 +22,7 @@ import {toast} from "@/components/ui/use-toast";
 import {Icons} from "@/components/icons";
 
 type Props = {
-  organizationId: string,
+  organization: Organization,
   currentUserId: string,
   user: {
     id: string,
@@ -38,7 +39,7 @@ export const RemoveUserFromOrganization = (props: Props) => {
     e.preventDefault()
     setIsSaving(true)
     try {
-      await ky.delete(`/api/organization/${props.organizationId}/user/${props.user.id}`)
+      await ky.delete(`/api/organization/${props.organization.id}/user/${props.user.id}`)
       setOpen(false)
       router.refresh()
     } catch (e) {
@@ -63,7 +64,7 @@ export const RemoveUserFromOrganization = (props: Props) => {
       </AlertDialogTrigger>
       <AlertDialogContent>
         <AlertDialogHeader>
-          <AlertDialogTitle>Are you absolutely sure to remove {props.user.name} from organization ?</AlertDialogTitle>
+          <AlertDialogTitle>Are you absolutely sure to remove {props.user.name} from {props.organization.name} organization ?</AlertDialogTitle>
           <AlertDialogDescription>
             This action cannot be undone.
           </AlertDialogDescription>
@@ -71,7 +72,7 @@ export const RemoveUserFromOrganization = (props: Props) => {
         <AlertDialogFooter>
           <AlertDialogCancel>Cancel</AlertDialogCancel>
           <AlertDialogAction asChild>
-            <Button onClick={handleDelete}>
+            <Button onClick={handleDelete} variant="destructive">
               {isSaving && (
                 <Icons.spinner className="mr-2 h-4 w-4 animate-spin"/>
               )}

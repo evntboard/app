@@ -27,7 +27,7 @@ export default async function OrganizationModuleNewPage(props: Props) {
     <div className="flex flex-1 flex-col gap-2 overflow-hidden">
       <div className="flex justify-between">
         <h1 className="font-heading text-xl">
-          New Storage
+          New storage
         </h1>
         <div className="flex items-center gap-2">
           <Link

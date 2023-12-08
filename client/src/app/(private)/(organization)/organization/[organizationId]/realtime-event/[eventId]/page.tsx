@@ -4,7 +4,7 @@ import Link from "next/link";
 
 import {getCurrentUser} from "@/lib/session";
 import {authOptions} from "@/lib/auth";
-import {getEvent, getEventProcessAndLogById} from "@/lib/event";
+import {getEvent, getEventById, getEventProcessAndLogById} from "@/lib/event";
 import {cn} from "@/lib/utils";
 import {Icons} from "@/components/icons";
 import {buttonVariants} from "@/components/ui/button";
@@ -25,13 +25,15 @@ export default async function OrganizationEventByIdPage(props: Props) {
     redirect(authOptions?.pages?.signIn || "/login")
   }
 
+  const event = await getEventById(props.params.organizationId, props.params.eventId)
+
   const data = await getEventProcessAndLogById(props.params.organizationId, props.params.eventId)
 
   return (
     <div className="flex flex-1 flex-col gap-2 overflow-hidden">
       <div className="flex justify-between">
         <h1 className="font-heading text-xl">
-          Event
+          Event {event.name}
         </h1>
         <div className="flex items-center gap-2">
           <Link

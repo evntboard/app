@@ -68,9 +68,8 @@ export const EventForm = ({organizationId, defaultValues}: Props) => {
         })
       }
 
-
       toast({
-        description: "module sent",
+        description: "Event sent.",
       })
 
       router.push(`/organization/${organizationId}/events`)
@@ -81,14 +80,14 @@ export const EventForm = ({organizationId, defaultValues}: Props) => {
           case 422:
             toast({
               title: "Provided data are not right",
-              description: "Your module was not created. Pro plan is required.",
+              description: "Your event was not created.",
               variant: "destructive",
             })
             break;
           case 402:
             toast({
               title: "Something went wrong.",
-              description: "Your module was not created. Pro plan is required.",
+              description: "Your event was not created.",
               variant: "destructive",
             })
             break;
@@ -96,7 +95,7 @@ export const EventForm = ({organizationId, defaultValues}: Props) => {
       }
       toast({
         title: "Something went wrong.",
-        description: "Your module was not created. Please try again.",
+        description: "Your event was not created. Please try again.",
         variant: "destructive",
       })
     } finally {
@@ -117,7 +116,7 @@ export const EventForm = ({organizationId, defaultValues}: Props) => {
             <FormItem>
               <FormLabel>Name</FormLabel>
               <FormControl>
-                <Input placeholder="/constants" {...field} />
+                <Input placeholder="my-event" {...field} />
               </FormControl>
               <FormDescription></FormDescription>
               <FormMessage/>
@@ -130,7 +129,7 @@ export const EventForm = ({organizationId, defaultValues}: Props) => {
             name="payload"
             render={({field}) => (
               <FormItem>
-                <FormLabel>Name</FormLabel>
+                <FormLabel>Payload</FormLabel>
                 <FormControl>
                   <Editor
                     language='json'

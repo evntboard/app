@@ -47,6 +47,19 @@ export const getEvent = async (eventKey: string): Promise<RealtimeEvent> => {
   }
 }
 
+export const getEventById = async (organizationId: string, eventId: string): Promise<RealtimeEvent> => {
+  const data = await redis.hgetall(gKeyOrgaEvent(organizationId, eventId))
+
+  return {
+    id: data.id,
+    name: data.name,
+    payload: jsonParse(data?.payload ?? ""),
+    emitter_name: data.emitter_name,
+    emitter_code: data.emitter_code,
+    emitted_at: data.emitted_at,
+  }
+}
+
 export const getEventsByOrganizationId = async (organizationId: string, userId: string): Promise<RealtimeEvent[]> => {
   const hasAccess = await userHasReadAccessToOrganization(organizationId, userId)
 

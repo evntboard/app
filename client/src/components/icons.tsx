@@ -35,7 +35,7 @@ import {
   LucideProps,
   Moon,
   MoreVertical,
-  Package,
+  Package, Pencil,
   Pizza,
   Plus,
   Power,
@@ -134,4 +134,5 @@ export const Icons = {
   zoom: Expand,
   sortDown: ArrowDownWideNarrow,
   sortUp: ArrowUpNarrowWide,
+  edit: Pencil
 }

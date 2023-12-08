@@ -38,7 +38,7 @@ export const EjectModule = ({session}: Props) => {
       await ky.delete(`/api/organization/${organizationId}/session/${session.sessionId}`)
 
       toast({
-        description: "Event deleted",
+        description: "Module ejected",
       })
       setOpenDialog(false)
     } catch (e) {
@@ -47,14 +47,14 @@ export const EjectModule = ({session}: Props) => {
           case 422:
             toast({
               title: "Provided data are not right",
-              description: "Your event was not deleted.",
+              description: "Your module was not ejected.",
               variant: "destructive",
             })
             break;
           case 402:
             toast({
               title: "Something went wrong.",
-              description: "Your event was not deleted.",
+              description: "Your module was not ejected.",
               variant: "destructive",
             })
             break;
@@ -62,7 +62,7 @@ export const EjectModule = ({session}: Props) => {
       }
       toast({
         title: "Something went wrong.",
-        description: "Your event was not deleted. Please try again.",
+        description: "Your module was not ejected. Please try again.",
         variant: "destructive",
       })
     } finally {
@@ -87,7 +87,7 @@ export const EjectModule = ({session}: Props) => {
           <DialogTitle>Do you want to eject this &quot;{session?.sessionId}&quot; module ?</DialogTitle>
           <DialogDescription/>
           <DialogFooter>
-            <Button onClick={handleOnReset}>Cancel</Button>
+            <Button onClick={handleOnReset} variant="secondary">Cancel</Button>
             <Button onClick={handleOnSave} disabled={isSaving} variant="destructive">Eject</Button>
           </DialogFooter>
         </DialogHeader>

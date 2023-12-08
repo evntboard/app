@@ -8,7 +8,7 @@ import * as z from "zod"
 
 import {cn} from "@/lib/utils"
 import {userNameSchema} from "@/lib/validations/user"
-import {buttonVariants} from "@/components/ui/button"
+import {Button, buttonVariants} from "@/components/ui/button"
 import {Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle,} from "@/components/ui/card"
 import {Input} from "@/components/ui/input"
 import {Label} from "@/components/ui/label"
@@ -55,20 +55,20 @@ export function OrganizationNewForm({className, ...props}: UserNameFormProps) {
         case 402:
           return toast({
             title: "Something went wrong.",
-            description: "Your organization was not created. Pro plan is required.",
+            description: "Your organization was not saved.",
             variant: "destructive",
           })
         default:
           return toast({
             title: "Something went wrong.",
-            description: "Your organization was not created. Please try again.",
+            description: "Your organization was not saved.",
             variant: "destructive",
           })
       }
     }
 
     toast({
-      description: "Your organization has been created.",
+      description: "Your organization has been saved.",
     })
 
     router.push("/organizations")
@@ -105,16 +105,16 @@ export function OrganizationNewForm({className, ...props}: UserNameFormProps) {
           </div>
         </CardContent>
         <CardFooter>
-          <button
+          <Button
             type="submit"
-            className={cn(buttonVariants(), className)}
+            className={className}
             disabled={isSaving}
           >
             {isSaving && (
               <Icons.spinner className="mr-2 h-4 w-4 animate-spin"/>
             )}
-            <span>Save</span>
-          </button>
+            Save
+          </Button>
         </CardFooter>
       </Card>
     </form>

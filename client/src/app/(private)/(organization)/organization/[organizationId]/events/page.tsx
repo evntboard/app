@@ -9,6 +9,7 @@ import {EventTable} from "./event-table";
 import {cn} from "@/lib/utils";
 import {buttonVariants} from "@/components/ui/button";
 import Link from "next/link";
+import {Icons} from "@/components/icons";
 
 type Props = {
   params: {
@@ -41,6 +42,7 @@ export default async function OrganizationByIdEvents(props: Props) {
             buttonVariants({variant: "default"})
           )}
         >
+          <Icons.create className="mr-2 h-4 w-4"/>
           Create
         </Link>
       </div>

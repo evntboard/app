@@ -64,7 +64,7 @@ export function SharedForm({className, entity, organizationId, ...props}: Props)
       const rez: Shared = await response.json()
 
       toast({
-        description: "Your organization has been created.",
+        description: "Your shared has been saved.",
       })
 
       if (!entity?.id) {
@@ -78,14 +78,14 @@ export function SharedForm({className, entity, organizationId, ...props}: Props)
           case 422:
             toast({
               title: "Provided data are not right",
-              description: "Your trigger was not created. Pro plan is required.",
+              description: "Your shared was not saved.",
               variant: "destructive",
             })
             break;
           case 402:
             toast({
               title: "Something went wrong.",
-              description: "Your organization was not created. Pro plan is required.",
+              description: "Your shared was not saved.",
               variant: "destructive",
             })
             break;
@@ -93,7 +93,7 @@ export function SharedForm({className, entity, organizationId, ...props}: Props)
       }
       toast({
         title: "Something went wrong.",
-        description: "Your organization was not created. Please try again.",
+        description: "Your shared was not saved. Please try again.",
         variant: "destructive",
       })
     } finally {
