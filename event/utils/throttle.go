@@ -69,5 +69,7 @@ func (t *Throttle) ScheduleAction(action func(), cancelAction func()) {
 			return
 		}
 		action()
-	}
+	} else {
+		cancelAction()
+	}	
 }
