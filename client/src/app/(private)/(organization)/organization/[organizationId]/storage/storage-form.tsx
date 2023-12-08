@@ -121,7 +121,7 @@ export const StorageForm = ({organizationId, defaultValues, isCreating = false}:
             </FormItem>
           )}
         />
-        <div>
+        <div className="flex justify-end">
           <Button
             type="submit"
             disabled={isSaving}

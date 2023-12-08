@@ -179,7 +179,7 @@ export const ModuleForm = ({organizationId, defaultValues}: Props) => {
             </div>
           )
         })}
-        <div>
+        <div className="flex justify-end">
           <Button
             type="submit"
             disabled={isSaving}

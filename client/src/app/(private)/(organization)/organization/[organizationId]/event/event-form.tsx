@@ -144,7 +144,7 @@ export const EventForm = ({organizationId, defaultValues}: Props) => {
             </FormItem>
           )}
         />
-        <div className="flex flex-col flex-1 mb-2">
+        <div className="flex flex-col mb-2">
           <FormField
             control={form.control}
             name="payload"
@@ -164,7 +164,7 @@ export const EventForm = ({organizationId, defaultValues}: Props) => {
             )}
           />
         </div>
-        <div>
+        <div className="flex justify-end">
           <Button
             type="submit"
             disabled={isSaving}
@@ -172,7 +172,7 @@ export const EventForm = ({organizationId, defaultValues}: Props) => {
             {isSaving && (
               <Icons.spinner className="mr-2 h-4 w-4 animate-spin"/>
             )}
-            Send
+            Save
           </Button>
         </div>
       </form>
