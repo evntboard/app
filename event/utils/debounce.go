@@ -82,6 +82,8 @@ func (d *Debounce) ScheduleAction(action func(), cancelAction func()) {
 				return
 			}
 			action()
+		} else {
+			cancelAction()
 		}
 	}
 }
