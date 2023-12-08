@@ -39,6 +39,7 @@ export async function POST(req: Request, context: z.infer<typeof routeContextSch
       data: {
         name: body.name,
         payload: body.payload,
+        description: body.description,
         organizationId: params.organizationId,
       },
       select: {

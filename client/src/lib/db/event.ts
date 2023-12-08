@@ -6,6 +6,7 @@ export async function getEventsByIdAndOrganization(organizationId: string, userI
       id: true,
       payload: true,
       name: true,
+      description: true,
     },
     where: {
       organizationId,

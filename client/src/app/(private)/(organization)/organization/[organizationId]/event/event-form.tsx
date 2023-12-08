@@ -15,9 +15,11 @@ import {Form, FormControl, FormDescription, FormField, FormItem, FormLabel, Form
 import {Input} from "@/components/ui/input";
 import {Editor} from "@/components/editor";
 import {JsonValue} from "@prisma/client/runtime/library";
+import {Textarea} from "@/components/ui/textarea";
 
 const eventSchema = z.object({
   name: z.string(),
+  description: z.string(),
   payload: z.string().refine((value) => {
     try {
       JSON.parse(value);
@@ -33,7 +35,7 @@ type FormData = z.infer<typeof eventSchema>
 
 type Props = {
   organizationId: string,
-  defaultValues: { id?: string, name: string, payload: JsonValue },
+  defaultValues: { id?: string, name: string, description: string, payload: JsonValue },
 }
 
 export const EventForm = ({organizationId, defaultValues}: Props) => {
@@ -42,6 +44,7 @@ export const EventForm = ({organizationId, defaultValues}: Props) => {
     resolver: zodResolver(eventSchema),
     defaultValues: {
       name: defaultValues.name,
+      description: defaultValues.description,
       payload: JSON.stringify(defaultValues.payload, undefined, 2)
     },
   })
@@ -56,6 +59,7 @@ export const EventForm = ({organizationId, defaultValues}: Props) => {
         await ky.patch(`/api/organization/${organizationId}/event/${defaultValues.id}`, {
           json: {
             name: data.name,
+            description: data.description,
             payload: jsonParse(data.payload),
           }
         })
@@ -63,6 +67,7 @@ export const EventForm = ({organizationId, defaultValues}: Props) => {
         await ky.post(`/api/organization/${organizationId}/event`, {
           json: {
             name: data.name,
+            description: data.description,
             payload: jsonParse(data.payload),
           }
         })
@@ -119,6 +124,22 @@ export const EventForm = ({organizationId, defaultValues}: Props) => {
                 <Input placeholder="my-event" {...field} />
               </FormControl>
               <FormDescription></FormDescription>
+              <FormMessage/>
+            </FormItem>
+          )}
+        />
+        <FormField
+          control={form.control}
+          name="description"
+          render={({field}) => (
+            <FormItem>
+              <FormLabel>Description</FormLabel>
+              <FormControl>
+                <Textarea
+                  placeholder="A sample event with a random data"
+                  {...field}
+                />
+              </FormControl>
               <FormMessage/>
             </FormItem>
           )}

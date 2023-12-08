@@ -21,7 +21,7 @@ import {Select, SelectContent, SelectItem, SelectTrigger, SelectValue} from "@/c
 type Props = {
   hasWriteAccess: boolean,
   organizationId: string,
-  events: { id: string; name: string; payload: JsonValue; }[],
+  events: { id: string; name: string; description: string; payload: JsonValue; }[],
 }
 
 const eventSchema = z.object({
@@ -117,7 +117,7 @@ export const AddEvent = ({hasWriteAccess, organizationId, events}: Props) => {
           <SelectContent>
             <SelectItem value="none">None</SelectItem>
             {events.map((event) => (
-              <SelectItem key={event.id} value={event.id}>{event.name}</SelectItem>
+              <SelectItem key={event.id} value={event.id}>{event.name} : {event.description}</SelectItem>
             ))}
           </SelectContent>
         </Select>

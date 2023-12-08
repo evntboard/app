@@ -80,6 +80,7 @@ export async function PATCH(
       },
       data: {
         name: body.name,
+        description: body.description,
         payload: body.payload,
       },
     })

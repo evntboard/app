@@ -35,6 +35,10 @@ const columns: ColumnDef<Event>[] = [
     header: "Name",
   },
   {
+    accessorKey: "description",
+    header: "Description",
+  },
+  {
     id: "action",
     header: "Action",
     cell: ({row: {original: event}}) => {
