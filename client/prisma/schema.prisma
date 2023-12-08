@@ -178,6 +178,7 @@ model Storage {
 model Event {
   id             String       @id @default(cuid())
   name           String
+  description    String
   payload        Json
   organization   Organization @relation(fields: [organizationId], references: [id])
   organizationId String       @map(name: "organization_id")
