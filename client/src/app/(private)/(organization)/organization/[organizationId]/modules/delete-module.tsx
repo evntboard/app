@@ -16,12 +16,13 @@ import {Button} from "@/components/ui/button";
 import {Icons} from "@/components/icons";
 import ky, {HTTPError} from "ky";
 import {toast} from "@/components/ui/use-toast";
+import {Module} from "@prisma/client";
 
 type Props = {
-  moduleId: string,
+  module: Module,
 }
 
-export const DeleteModule = ({moduleId}: Props) => {
+export const DeleteModule = ({module}: Props) => {
   const router = useRouter()
   const { organizationId } = useParams()
   const [openDialog, setOpenDialog] = React.useState<boolean>(false)
@@ -35,10 +36,10 @@ export const DeleteModule = ({moduleId}: Props) => {
   const handleOnSave = async () => {
     try {
       setIsSaving(true)
-      await ky.delete(`/api/organization/${organizationId}/module/${moduleId}`)
+      await ky.delete(`/api/organization/${organizationId}/module/${module.id}`)
 
       toast({
-        description: "Event sent",
+        description: "Module deleted",
       })
       setOpenDialog(false)
       router.refresh()
@@ -48,14 +49,14 @@ export const DeleteModule = ({moduleId}: Props) => {
           case 422:
             toast({
               title: "Provided data are not right",
-              description: "Your trigger was not created. Pro plan is required.",
+              description: "Your module was not deleted.",
               variant: "destructive",
             })
             break;
           case 402:
             toast({
               title: "Something went wrong.",
-              description: "Your organization was not created. Pro plan is required.",
+              description: "Your module was not deleted.",
               variant: "destructive",
             })
             break;
@@ -63,7 +64,7 @@ export const DeleteModule = ({moduleId}: Props) => {
       }
       toast({
         title: "Something went wrong.",
-        description: "Your organization was not created. Please try again.",
+        description: "Your module was not deleted. Please try again.",
         variant: "destructive",
       })
     } finally {
@@ -78,14 +79,14 @@ export const DeleteModule = ({moduleId}: Props) => {
   return (
     <Dialog open={openDialog} onOpenChange={setOpenDialog}>
       <DialogTrigger asChild>
-        <Button size="icon" onClick={handleOpenDialog}><Icons.delete className="h-5 w-5"/></Button>
+        <Button size="icon" onClick={handleOpenDialog} variant="destructive"><Icons.delete className="h-5 w-5"/></Button>
       </DialogTrigger>
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>Do you want to delete this &quot;{moduleId}&quot; module ?</DialogTitle>
+          <DialogTitle>Do you want to delete [{module.code}]{module.name} module ?</DialogTitle>
           <DialogDescription/>
           <DialogFooter>
-            <Button onClick={handleOnReset}>Cancel</Button>
+            <Button variant="secondary" onClick={handleOnReset}>Cancel</Button>
             <Button variant="destructive" onClick={handleOnSave} disabled={isSaving}>Delete</Button>
           </DialogFooter>
         </DialogHeader>

@@ -69,12 +69,12 @@ const columns: ColumnDef<Module>[] = [
             )}
           >
             <>
-              <Icons.create className="mr-2 h-4 w-4"/>
+              <Icons.edit className="mr-2 h-4 w-4"/>
               Edit
             </>
           </Link>
-          <TokenModule moduleId={original.id}/>
-          <DeleteModule moduleId={original.id}/>
+          <TokenModule module={{...original, token: ""}}/>
+          <DeleteModule module={{...original, token: ""}}/>
         </div>
       )
     }

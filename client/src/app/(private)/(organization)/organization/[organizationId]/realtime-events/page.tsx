@@ -42,7 +42,7 @@ export default async function OrganizationEventPage(props: Props) {
           )}
         >
           <Icons.event className="mr-2 h-4 w-4"/>
-          New Event
+          Send an event
         </Link>
       </div>
       <RealTimeEventTable events={events} organizationId={props.params.organizationId}/>

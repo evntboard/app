@@ -38,7 +38,7 @@ export const DeleteStorage = ({storageKey}: Props) => {
       await ky.delete(`/api/organization/${organizationId}/storage/${storageKey}`)
 
       toast({
-        description: "Event sent",
+        description: "Storage deleted",
       })
       setOpenDialog(false)
       router.refresh()
@@ -48,14 +48,14 @@ export const DeleteStorage = ({storageKey}: Props) => {
           case 422:
             toast({
               title: "Provided data are not right",
-              description: "Your trigger was not created. Pro plan is required.",
+              description: "Your storage was not deleted.",
               variant: "destructive",
             })
             break;
           case 402:
             toast({
               title: "Something went wrong.",
-              description: "Your organization was not created. Pro plan is required.",
+              description: "Your storage was not deleted.",
               variant: "destructive",
             })
             break;
@@ -63,7 +63,7 @@ export const DeleteStorage = ({storageKey}: Props) => {
       }
       toast({
         title: "Something went wrong.",
-        description: "Your organization was not created. Please try again.",
+        description: "Your storage was not deleted. Please try again.",
         variant: "destructive",
       })
     } finally {
@@ -78,14 +78,14 @@ export const DeleteStorage = ({storageKey}: Props) => {
   return (
     <Dialog open={openDialog} onOpenChange={setOpenDialog}>
       <DialogTrigger asChild>
-        <Button size="icon" onClick={handleOpenDialog}><Icons.delete className="h-5 w-5"/></Button>
+        <Button variant="destructive" size="icon" onClick={handleOpenDialog}><Icons.delete className="h-5 w-5"/></Button>
       </DialogTrigger>
       <DialogContent>
         <DialogHeader>
           <DialogTitle>Do you want to delete this &quot;{storageKey}&quot; storage ?</DialogTitle>
           <DialogDescription/>
           <DialogFooter>
-            <Button onClick={handleOnReset}>Cancel</Button>
+            <Button variant="secondary" onClick={handleOnReset}>Cancel</Button>
             <Button variant="destructive" onClick={handleOnSave} disabled={isSaving}>Delete</Button>
           </DialogFooter>
         </DialogHeader>

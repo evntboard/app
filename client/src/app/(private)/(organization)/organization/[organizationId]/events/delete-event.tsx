@@ -54,7 +54,7 @@ export const DeleteEvent = ({event}: Props) => {
           case 402:
             toast({
               title: "Something went wrong.",
-              description: "Your event was not deleted.",
+              description: "Your event was not deleted. Please try again.",
               variant: "destructive",
             })
             break;
@@ -87,7 +87,7 @@ export const DeleteEvent = ({event}: Props) => {
           <DialogTitle>Do you want to delete this &quot;{event?.name}&quot; event ?</DialogTitle>
           <DialogDescription/>
           <DialogFooter>
-            <Button onClick={handleOnReset}>Cancel</Button>
+            <Button onClick={handleOnReset} variant="secondary">Cancel</Button>
             <Button onClick={handleOnSave} disabled={isSaving} variant="destructive">Delete</Button>
           </DialogFooter>
         </DialogHeader>

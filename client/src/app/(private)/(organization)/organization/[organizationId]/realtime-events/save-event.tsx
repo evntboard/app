@@ -16,12 +16,14 @@ import {Icons} from "@/components/icons";
 import {RealtimeEvent} from "@/types/realtime-event";
 import ky, {HTTPError} from "ky";
 import {toast} from "@/components/ui/use-toast";
+import {useParams} from "next/navigation";
 
 type Props = {
   event: RealtimeEvent,
 }
 
 export const SaveEvent = ({event}: Props) => {
+  const {organizationId} = useParams()
   const [openDialog, setOpenDialog] = React.useState<boolean>(false)
   const [isSaving, setIsSaving] = React.useState<boolean>(false)
 
@@ -33,7 +35,7 @@ export const SaveEvent = ({event}: Props) => {
   const handleOnSave = async () => {
     try {
       setIsSaving(true)
-      await ky.post(`/api/organization/${event.organizationId}/event`, {
+      await ky.post(`/api/organization/${organizationId}/event`, {
         json: {
           name: event.name,
           payload: event.payload
@@ -41,7 +43,7 @@ export const SaveEvent = ({event}: Props) => {
       })
 
       toast({
-        description: "Event sent",
+        description: "Event saved",
       })
       setOpenDialog(false)
     } catch (e) {
@@ -50,14 +52,14 @@ export const SaveEvent = ({event}: Props) => {
           case 422:
             toast({
               title: "Provided data are not right",
-              description: "Your trigger was not created. Pro plan is required.",
+              description: "Your event was not saved.",
               variant: "destructive",
             })
             break;
           case 402:
             toast({
               title: "Something went wrong.",
-              description: "Your organization was not created. Pro plan is required.",
+              description: "Your event was not saved.",
               variant: "destructive",
             })
             break;
@@ -65,7 +67,7 @@ export const SaveEvent = ({event}: Props) => {
       }
       toast({
         title: "Something went wrong.",
-        description: "Your organization was not created. Please try again.",
+        description: "Your event was not saved. Please try again.",
         variant: "destructive",
       })
     } finally {
@@ -80,14 +82,14 @@ export const SaveEvent = ({event}: Props) => {
   return (
     <Dialog open={openDialog} onOpenChange={setOpenDialog}>
       <DialogTrigger asChild>
-        <Button size="icon" onClick={handleOpenDialog}><Icons.save className="h-5 w-5"/></Button>
+        <Button size="icon" onClick={handleOpenDialog} variant="secondary"><Icons.save className="h-5 w-5"/></Button>
       </DialogTrigger>
       <DialogContent>
         <DialogHeader>
           <DialogTitle>Do you want to save this &quot;{event?.name}&quot; event ?</DialogTitle>
           <DialogDescription/>
           <DialogFooter>
-            <Button onClick={handleOnReset}>Reset</Button>
+            <Button onClick={handleOnReset} variant="secondary">Cancel</Button>
             <Button onClick={handleOnSave} disabled={isSaving}>Save</Button>
           </DialogFooter>
         </DialogHeader>

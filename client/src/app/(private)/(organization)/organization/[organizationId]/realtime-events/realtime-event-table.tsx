@@ -13,6 +13,7 @@ import {Button, buttonVariants} from "@/components/ui/button";
 import {Icons} from "@/components/icons";
 import {Editor} from "@/components/editor";
 import {SaveEvent} from "@/app/(private)/(organization)/organization/[organizationId]/realtime-events/save-event";
+import {useParams} from "next/navigation";
 
 const columns: ColumnDef<RealtimeEvent>[] = [
   {
@@ -58,23 +59,27 @@ const columns: ColumnDef<RealtimeEvent>[] = [
   {
     id: "action",
     header: "Action",
-    cell: ({row: {original: event}}) => {
-      return (
-        <div className="flex gap-2">
-          <Link
-            href={`/organization/${event.organizationId}/realtime-event/${event.id}`}
-            className={cn(
-              buttonVariants({size: "icon"}),
-            )}
-          >
-            <Icons.search className="h-5 w-5"/>
-          </Link>
-          <SaveEvent event={event}/>
-        </div>
-      )
-    }
+    cell: ({row: {original: event}}) => <ActionComponent event={event} />
   },
 ]
+
+const ActionComponent = ({ event }: { event: RealtimeEvent}) => {
+  const { organizationId } = useParams()
+
+  return (
+    <div className="flex gap-2">
+      <Link
+        href={`/organization/${organizationId}/realtime-event/${event.id}`}
+        className={cn(
+          buttonVariants({size: "icon", variant: "secondary"}),
+        )}
+      >
+        <Icons.search className="h-5 w-5"/>
+      </Link>
+      <SaveEvent event={event}/>
+    </div>
+  )
+}
 
 export const RealTimeEventTable = (props: { events: RealtimeEvent[], organizationId: string }) => {
   const [events, setEvents] = useState(props.events)

@@ -9,6 +9,7 @@ import {DashboardHeader} from "@/components/header";
 import {buttonVariants} from "@/components/ui/button";
 
 import {OrganizationCard} from "./organization-card";
+import {Icons} from "@/components/icons";
 
 export default async function OrganizationsPage() {
   const user = await getCurrentUser()
@@ -28,6 +29,7 @@ export default async function OrganizationsPage() {
             buttonVariants({variant: "default"})
           )}
         >
+          <Icons.create className="mr-2 h-4 w-4"/>
           Create
         </Link>
       </DashboardHeader>

@@ -19,15 +19,16 @@ import {toast} from "@/components/ui/use-toast";
 import {Input} from "@/components/ui/input";
 import {Icons} from "@/components/icons";
 import {UserAvatar} from "@/components/user-avatar";
+import {Organization} from "@prisma/client";
 
 type Props = {
   hasWriteAccess: boolean,
-  organizationId: string,
+  organization: Organization,
 }
 
 type UserOption = { id: string, name?: string, image?: string }
 
-export const AddMembers = ({hasWriteAccess, organizationId}: Props) => {
+export const AddMembers = ({hasWriteAccess, organization}: Props) => {
   const router = useRouter()
 
   const [openDialog, setOpenDialog] = React.useState<boolean>(false)
@@ -42,7 +43,7 @@ export const AddMembers = ({hasWriteAccess, organizationId}: Props) => {
       if (search.length >= 3) {
         setIsLoadingOptions(true)
         try {
-          const res = await ky.get(`/api/organization/${organizationId}/user?search=${search}`)
+          const res = await ky.get(`/api/organization/${organization.id}/user?search=${search}`)
           const datas: UserOption[] = await res.json()
           setOptions(datas)
         } catch (e) {
@@ -71,12 +72,12 @@ export const AddMembers = ({hasWriteAccess, organizationId}: Props) => {
     setIsSaving(true)
 
     try {
-      await ky.post(`/api/organization/${organizationId}/user`, {
+      await ky.post(`/api/organization/${organization.id}/user`, {
         json: {userId: selectedUser?.id}
       })
 
       toast({
-        description: "Your organization has been created.",
+        description: "Your members was added.",
       })
 
       setOpenDialog(false)
@@ -88,14 +89,14 @@ export const AddMembers = ({hasWriteAccess, organizationId}: Props) => {
           case 422:
             toast({
               title: "Provided data are not right",
-              description: "Your trigger was not created. Pro plan is required.",
+              description: "Your members was not added.",
               variant: "destructive",
             })
             break;
           case 402:
             toast({
               title: "Something went wrong.",
-              description: "Your organization was not created. Pro plan is required.",
+              description: "Your members was not added.",
               variant: "destructive",
             })
             break;
@@ -103,7 +104,7 @@ export const AddMembers = ({hasWriteAccess, organizationId}: Props) => {
       }
       toast({
         title: "Something went wrong.",
-        description: "Your organization was not created. Please try again.",
+        description: "Your members was not added. Please try again.",
         variant: "destructive",
       })
     } finally {
@@ -125,12 +126,13 @@ export const AddMembers = ({hasWriteAccess, organizationId}: Props) => {
           onClick={handleOpenDialog}
           disabled={!hasWriteAccess}
         >
+          <Icons.create className="mr-2 h-4 w-4"/>
           Invite members
         </Button>
       </DialogTrigger>
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>Invite a member to {organizationId}</DialogTitle>
+          <DialogTitle>Invite a member to {organization.name}</DialogTitle>
           <DialogDescription/>
         </DialogHeader>
         Search by username

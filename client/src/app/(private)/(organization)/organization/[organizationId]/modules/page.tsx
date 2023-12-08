@@ -10,6 +10,7 @@ import {cn} from "@/lib/utils";
 import {buttonVariants} from "@/components/ui/button";
 
 import {ModuleTable} from "./module-table";
+import {Icons} from "@/components/icons";
 
 type Props = {
   params: {
@@ -40,6 +41,7 @@ export default async function OrganizationModulePage(props: Props) {
             buttonVariants({variant: "default"})
           )}
         >
+          <Icons.create className="mr-2 h-4 w-4"/>
           Create
         </Link>
       </div>

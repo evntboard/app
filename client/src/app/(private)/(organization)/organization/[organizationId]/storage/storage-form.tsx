@@ -49,7 +49,7 @@ export const StorageForm = ({organizationId, defaultValues, isCreating = false}:
       })
 
       toast({
-        description: "module sent",
+        description: "Storage saved",
       })
 
       router.refresh()
@@ -60,14 +60,14 @@ export const StorageForm = ({organizationId, defaultValues, isCreating = false}:
           case 422:
             toast({
               title: "Provided data are not right",
-              description: "Your module was not created. Pro plan is required.",
+              description: "Your storage was not saved.",
               variant: "destructive",
             })
             break;
           case 402:
             toast({
               title: "Something went wrong.",
-              description: "Your module was not created. Pro plan is required.",
+              description: "Your storage was not saved.",
               variant: "destructive",
             })
             break;
@@ -75,7 +75,7 @@ export const StorageForm = ({organizationId, defaultValues, isCreating = false}:
       }
       toast({
         title: "Something went wrong.",
-        description: "Your module was not created. Please try again.",
+        description: "Your storage was not saved. Please try again.",
         variant: "destructive",
       })
     } finally {

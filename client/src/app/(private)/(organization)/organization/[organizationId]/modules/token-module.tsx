@@ -1,8 +1,8 @@
 "use client"
 
 import * as React from "react";
-import {useEffect} from "react";
-import {useParams, useRouter} from "next/navigation";
+import {useParams} from "next/navigation";
+import ky from "ky";
 
 import {
   Dialog,
@@ -15,14 +15,14 @@ import {
 } from "@/components/ui/dialog";
 import {Button} from "@/components/ui/button";
 import {Icons} from "@/components/icons";
-import ky, {HTTPError} from "ky";
 import {toast} from "@/components/ui/use-toast";
+import {Module} from "@prisma/client";
 
 type Props = {
-  moduleId: string,
+  module: Module,
 }
 
-export const TokenModule = ({moduleId}: Props) => {
+export const TokenModule = ({module}: Props) => {
   const {organizationId} = useParams()
   const [openDialog, setOpenDialog] = React.useState<boolean>(false)
   const [isSaving, setIsSaving] = React.useState<boolean>(false)
@@ -35,7 +35,7 @@ export const TokenModule = ({moduleId}: Props) => {
   const handleCopyToken = async () => {
     setIsSaving(true)
     try {
-      const res = await ky.get(`/api/organization/${organizationId}/module/${moduleId}/token`)
+      const res = await ky.get(`/api/organization/${organizationId}/module/${module.id}/token`)
       const json: { token: string } = await res.json()
       await window.navigator.clipboard.writeText(json.token)
       toast({
@@ -53,7 +53,7 @@ export const TokenModule = ({moduleId}: Props) => {
   const handleRefreshToken = async () => {
     setIsSaving(true)
     try {
-      await ky.get(`/api/organization/${organizationId}/module/${moduleId}/refresh-token`)
+      await ky.get(`/api/organization/${organizationId}/module/${module.id}/refresh-token`)
       toast({
         description: "Token refresh !",
       })
@@ -69,11 +69,11 @@ export const TokenModule = ({moduleId}: Props) => {
   return (
     <Dialog open={openDialog} onOpenChange={setOpenDialog}>
       <DialogTrigger asChild>
-        <Button size="icon" onClick={handleOpenDialog}><Icons.token className="h-5 w-5"/></Button>
+        <Button size="icon" onClick={handleOpenDialog} variant="secondary"><Icons.token className="h-5 w-5"/></Button>
       </DialogTrigger>
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>Token for &quot;{moduleId}&quot; module ?</DialogTitle>
+          <DialogTitle>Token for [{module.code}]{module.name} module ?</DialogTitle>
           <DialogDescription>
           </DialogDescription>
           <DialogFooter>

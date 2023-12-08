@@ -70,14 +70,14 @@ export const ModuleForm = ({organizationId, defaultValues}: Props) => {
           case 422:
             toast({
               title: "Provided data are not right",
-              description: "Your module was not created. Pro plan is required.",
+              description: "Your module was not created.",
               variant: "destructive",
             })
             break;
           case 402:
             toast({
               title: "Something went wrong.",
-              description: "Your module was not created. Pro plan is required.",
+              description: "Your module was not created. Please try again.",
               variant: "destructive",
             })
             break;

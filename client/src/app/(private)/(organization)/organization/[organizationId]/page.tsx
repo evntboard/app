@@ -38,8 +38,8 @@ export default async function OrganizationPage(props: Props) {
           Manage organization
         </h1>
         <AddMembers
-          organizationId={props.params.organizationId}
-          hasWriteAccess={!!hasWriteAccess}
+          organization={organization}
+          hasWriteAccess={hasWriteAccess}
         />
       </div>
       <div>
@@ -53,7 +53,7 @@ export default async function OrganizationPage(props: Props) {
             return (
               <li key={user.name} className="flex items-center justify-between">
                 <UserAvatarName user={user} />
-                <RemoveUserFromOrganization currentUserId={user.id} user={user} organizationId={props.params.organizationId} />
+                <RemoveUserFromOrganization currentUserId={user.id} user={user} organization={organization} />
               </li>
             )
           })}

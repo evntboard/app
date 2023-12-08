@@ -9,6 +9,7 @@ import {StorageTable} from "./storage-table";
 import Link from "next/link";
 import {cn} from "@/lib/utils";
 import {buttonVariants} from "@/components/ui/button";
+import {Icons} from "@/components/icons";
 
 type Props = {
   params: {
@@ -37,6 +38,7 @@ export default async function OrganizationStoragePage(props: Props) {
             buttonVariants({variant: "default"})
           )}
         >
+          <Icons.create className="mr-2 h-4 w-4"/>
           Create
         </Link>
       </div>

@@ -43,11 +43,11 @@ const columns: ColumnDef<Event>[] = [
           <Link
             href={`/organization/${event.organizationId}/event/${event.id}`}
             className={cn(
-              buttonVariants({variant: "ghost"}),
+              buttonVariants({variant: "secondary"}),
             )}
           >
             <>
-              <Icons.create className="mr-2 h-4 w-4"/>
+              <Icons.edit className="mr-2 h-4 w-4"/>
               Edit
             </>
           </Link>
