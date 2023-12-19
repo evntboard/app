@@ -13,7 +13,7 @@ func main() {
 	databaseService := service.NewDbService(globalConfig)
 	redisService := service.NewRedisService(globalConfig)
 
-	storageTempService := service.NewStorageTemporary()
+	storageTempService := service.NewStorageTemporary(redisService)
 	storagePersistentService := service.NewStoragePersistent(databaseService)
 	sharedService := service.NewSharedService(databaseService)
 	triggerService := service.NewTriggerService(databaseService)

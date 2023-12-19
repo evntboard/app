@@ -1,10 +1,13 @@
 package service
 
 import (
+	"encoding/json"
 	"errors"
+	"fmt"
 	"github.com/evntboard/app/event/model"
 	"github.com/lucsky/cuid"
 	"gorm.io/gorm"
+	"log"
 )
 
 type StoragePersistentService struct {
@@ -15,16 +18,7 @@ func NewStoragePersistent(dbService *DbService) *StoragePersistentService {
 	return &StoragePersistentService{dbService}
 }
 
-func (c *StoragePersistentService) GetAllPersistentStorage() ([]model.PersistentStorage, error) {
-	var Storages []model.PersistentStorage
-	result := c.dbService.Db.Find(&Storages)
-	if result.Error != nil {
-		return nil, result.Error
-	}
-	return Storages, nil
-}
-
-func (c *StoragePersistentService) GetPersistentStorage(organizationId string, key string) (*model.PersistentStorage, error) {
+func (c *StoragePersistentService) GetPersistentStorage(organizationId string, key string) (any, error) {
 	var storage model.PersistentStorage
 
 	result := c.dbService.Db.Where("key = ? AND organization_id = ?", key, organizationId).Limit(1).Find(&storage)
@@ -36,10 +30,16 @@ func (c *StoragePersistentService) GetPersistentStorage(organizationId string, k
 		return nil, errors.New("no result found")
 	}
 
-	return &storage, nil
+	var decodedValue interface{}
+	err := json.Unmarshal(storage.Value, &decodedValue)
+	if err != nil {
+		return nil, fmt.Errorf("Storage decoding %s error: %s", key, err.Error())
+	}
+
+	return decodedValue, nil
 }
 
-func (c *StoragePersistentService) CreateOrUpdatePersistentStorage(organizationId string, key string, value string) (*model.PersistentStorage, error) {
+func (c *StoragePersistentService) CreateOrUpdatePersistentStorage(organizationId string, key string, value any) (any, error) {
 	var newItem *model.PersistentStorage
 
 	var existingItem model.PersistentStorage
@@ -55,19 +55,30 @@ func (c *StoragePersistentService) CreateOrUpdatePersistentStorage(organizationI
 			return nil, result.Error
 		}
 
-		return &existingItem, nil
+		var decodedValue interface{}
+		err := json.Unmarshal(existingItem.Value, &decodedValue)
+		if err != nil {
+			return nil, fmt.Errorf("Storage decoding %s error: %s", key, err.Error())
+		}
+
+		return decodedValue, nil
+	}
+
+	valueJSON, err := json.Marshal(value)
+	if err != nil {
+		log.Println("Erreur de codage JSON de la requête:", err)
 	}
 
 	newItem = &model.PersistentStorage{
 		ID:             cuid.New(),
 		OrganizationId: organizationId,
 		Key:            key,
-		Value:          value,
+		Value:          valueJSON,
 	}
 	result = c.dbService.Db.Create(newItem)
 	if result.Error != nil {
 		return nil, result.Error
 	}
 
-	return newItem, nil
+	return value, nil
 }

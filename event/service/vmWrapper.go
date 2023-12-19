@@ -142,25 +142,16 @@ func (c *VmWrapped) LoadVars() {
 	if err := c.vm.Set("modules", modulesObj); err != nil {
 		log.Printf("[%s] %s : Error trigger [%s] %s -> register moduleRequest\n", c.event.ID, c.event.Name, c.condition.TriggerID, c.condition.Trigger.Name)
 	}
-
-	// storage persistent
-
-	storagePersistent := c.vm.NewObject()
-
-	if err := storagePersistent.Set("set", c.vmStoragePersistentSet); err != nil {
-		log.Printf("[%s] %s : Error trigger [%s] %s -> register tmpFile vmStorageTmpSet\n", c.event.ID, c.event.Name, c.condition.TriggerID, c.condition.Trigger.Name)
-	}
-
-	if err := storagePersistent.Set("get", c.vmStoragePersistentGet); err != nil {
-		log.Printf("[%s] %s : Error trigger [%s] %s -> register tmpFile vmStorageTmpSet\n", c.event.ID, c.event.Name, c.condition.TriggerID, c.condition.Trigger.Name)
-	}
-
 	// storage
 
 	storageObj := c.vm.NewObject()
 
-	if err := storageObj.Set("persistent", storagePersistent); err != nil {
-		log.Printf("[%s] %s : Error trigger [%s] %s -> register moduleRequest\n", c.event.ID, c.event.Name, c.condition.TriggerID, c.condition.Trigger.Name)
+	if err := storageObj.Set("set", c.vmStorageSet); err != nil {
+		log.Printf("[%s] %s : Error trigger [%s] %s -> register storage set \n", c.event.ID, c.event.Name, c.condition.TriggerID, c.condition.Trigger.Name)
+	}
+
+	if err := storageObj.Set("get", c.vmStorageGet); err != nil {
+		log.Printf("[%s] %s : Error trigger [%s] %s -> register storage get\n", c.event.ID, c.event.Name, c.condition.TriggerID, c.condition.Trigger.Name)
 	}
 
 	if err := c.vm.Set("storage", storageObj); err != nil {
@@ -311,36 +302,70 @@ func (c *VmWrapped) getModuleIdsByCode(organizationId string, code string) ([]st
 	return modulesId, nil
 }
 
-func (c *VmWrapped) vmStoragePersistentSet(key string, value string) string {
+func (c *VmWrapped) vmStorageSet(key string, value any) any {
 	ctx := context.Background()
-	res, err := c.storagePersistentService.CreateOrUpdatePersistentStorage(c.condition.Trigger.OrganizationId, key, value)
 
-	if err != nil {
-		panic(c.vm.NewGoError(fmt.Errorf("Storage %s error: %s", key, err.Error())))
+	if strings.HasPrefix(key, "tmp:") {
+		res, err := c.storageTemporaryService.CreateOrUpdateTemporaryStorage(c.condition.Trigger.OrganizationId, key, value)
+
+		if err != nil {
+			panic(c.vm.NewGoError(fmt.Errorf("Storage %s error: %s", key, err.Error())))
+		}
+
+		storageChannel := utils.GChOrgaStorage(c.condition.Trigger.OrganizationId)
+
+		messageJSON, err := json.Marshal(map[string]any{"key": key, "value": res})
+		if err != nil {
+			log.Println("Erreur de codage JSON de la requête:", err)
+		}
+
+		if err = c.redisService.Client.Publish(ctx, storageChannel, messageJSON).Err(); err != nil {
+			fmt.Println("ICI", err)
+		}
+
+		return res
+	} else {
+		res, err := c.storagePersistentService.CreateOrUpdatePersistentStorage(c.condition.Trigger.OrganizationId, key, value)
+
+		if err != nil {
+			panic(c.vm.NewGoError(fmt.Errorf("Storage %s error: %s", key, err.Error())))
+		}
+
+		storageChannel := utils.GChOrgaStorage(c.condition.Trigger.OrganizationId)
+
+		messageJSON, err := json.Marshal(map[string]any{"key": key, "value": value})
+		if err != nil {
+			log.Println("Erreur de codage JSON de la requête:", err)
+		}
+
+		if err = c.redisService.Client.Publish(ctx, storageChannel, messageJSON).Err(); err != nil {
+			fmt.Println("ICI", err)
+		}
+
+		return res
 	}
-
-	storageChannel := utils.GChOrgaStorage(c.condition.Trigger.OrganizationId)
-
-	messageJSON, err := json.Marshal(map[string]string{"key": key, "value": value})
-	if err != nil {
-		log.Println("Erreur de codage JSON de la requête:", err)
-	}
-
-	if err = c.redisService.Client.Publish(ctx, storageChannel, messageJSON).Err(); err != nil {
-		fmt.Println("ICI", err)
-	}
-
-	return res.Value
 }
 
-func (c *VmWrapped) vmStoragePersistentGet(key string) string {
-	res, err := c.storagePersistentService.GetPersistentStorage(c.condition.Trigger.OrganizationId, key)
+func (c *VmWrapped) vmStorageGet(key string) any {
+	if strings.HasPrefix(key, "tmp:") {
+		res, err := c.storageTemporaryService.GetTemporaryStorage(c.condition.Trigger.OrganizationId, key)
 
-	if err != nil {
-		panic(c.vm.NewGoError(fmt.Errorf("Storage %s error: %s", key, err.Error())))
+		if err != nil {
+			fmt.Println("Storage %s error: %s", key, err.Error())
+			return nil
+		}
+
+		return res
+	} else {
+		res, err := c.storagePersistentService.GetPersistentStorage(c.condition.Trigger.OrganizationId, key)
+
+		if err != nil {
+			fmt.Println("Storage %s error: %s", key, err.Error())
+			return nil
+		}
+
+		return res
 	}
-
-	return res.Value
 }
 
 func (c *VmWrapped) vmModuleNameRequestCall(moduleName string, moduleMethod string, params any) any {
