@@ -23,15 +23,15 @@ root:
   - chown 1000:1000 -R ./
 artifacts:
 - builder: builder-2
-  source: "/home/node/app/.next"
-  destination: "/home/node/app/.next"
+  source: "/home/node/app/dist"
+  destination: "/home/node/app/dist"
 - builder: builder-2
   source: "/home/node/app/prisma"
   destination: "/home/node/app/prisma"
 entrypoint:
-- /home/node/app/node_modules/.bin/next
+- node
 cmd:
-- start
+- dist/main.js
 ignores:
 - "**"
 - "!/src/"
