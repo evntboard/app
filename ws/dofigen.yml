@@ -28,6 +28,8 @@ artifacts:
 - builder: builder-2
   source: "/home/node/app/prisma"
   destination: "/home/node/app/prisma"
+script:
+- npx prisma generate
 entrypoint:
 - node
 cmd:
