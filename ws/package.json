@@ -5,7 +5,7 @@
   "main": "index.js",
   "scripts": {
     "dev": "nodemon --watch \"src/**/*.ts\" --exec \"ts-node\" src/main.ts",
-    "start": "ts-node src/main.ts",
+    "start": "node dist/main.js",
     "build": "rimraf ./dist && rimraf ./build && tsc ./src/main.ts --outDir ./dist",
     "lint": "standard --fix",
     "test": "echo \"Error: no test specified\" && exit 1"
