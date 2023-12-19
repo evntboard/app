@@ -32,6 +32,7 @@ export async function getEventByIdAndOrganization(organizationId: string, userId
   return db.event.findFirst({
     select: {
       id: true,
+      description: true,
       payload: true,
       name: true,
     },

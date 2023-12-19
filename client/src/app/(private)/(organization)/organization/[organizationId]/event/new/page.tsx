@@ -44,7 +44,8 @@ export default async function OrganizationEventNewPage(props: Props) {
       <EventForm
         defaultValues={{
           name: 'an-event',
-          payload: ""
+          payload: "",
+          description: ""
         }}
         organizationId={props.params.organizationId}
       />

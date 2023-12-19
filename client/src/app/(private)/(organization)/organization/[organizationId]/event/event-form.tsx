@@ -18,6 +18,7 @@ import {JsonValue} from "@prisma/client/runtime/library";
 import {Textarea} from "@/components/ui/textarea";
 
 const eventSchema = z.object({
+  id: z.string().optional(),
   name: z.string(),
   description: z.string(),
   payload: z.string().refine((value) => {
@@ -43,6 +44,7 @@ export const EventForm = ({organizationId, defaultValues}: Props) => {
   const form = useForm<FormData>({
     resolver: zodResolver(eventSchema),
     defaultValues: {
+      id: defaultValues.id,
       name: defaultValues.name,
       description: defaultValues.description,
       payload: JSON.stringify(defaultValues.payload, undefined, 2)
