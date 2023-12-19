@@ -55,13 +55,7 @@ func (c *StoragePersistentService) CreateOrUpdatePersistentStorage(organizationI
 			return nil, result.Error
 		}
 
-		var decodedValue interface{}
-		err := json.Unmarshal(existingItem.Value, &decodedValue)
-		if err != nil {
-			return nil, fmt.Errorf("Storage decoding %s error: %s", key, err.Error())
-		}
-
-		return decodedValue, nil
+		return value, nil
 	}
 
 	valueJSON, err := json.Marshal(value)
