@@ -49,18 +49,18 @@ func (c *StoragePersistentService) CreateOrUpdatePersistentStorage(organizationI
 		return nil, result.Error
 	}
 
+	valueJSON, err := json.Marshal(value)
+	if err != nil {
+		log.Println("Erreur de codage JSON de la requête:", err)
+	}
+
 	if result.RowsAffected > 0 {
-		result = c.dbService.Db.Model(&existingItem).Update("value", value)
+		result = c.dbService.Db.Model(&existingItem).Update("value", valueJSON)
 		if result.Error != nil {
 			return nil, result.Error
 		}
 
 		return value, nil
-	}
-
-	valueJSON, err := json.Marshal(value)
-	if err != nil {
-		log.Println("Erreur de codage JSON de la requête:", err)
 	}
 
 	newItem = &model.PersistentStorage{
