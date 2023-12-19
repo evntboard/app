@@ -1,0 +1,24 @@
+---
+builders:
+- image: golang:1.21.3
+  workdir: /go/src
+  adds:
+  - "."
+  script:
+  - go build cmd/event/main.go
+image: golang:1.21.3
+workdir: /app
+artifacts:
+- builder: builder-0
+  source: "/go/src/main"
+  destination: "/app/event"
+entrypoint:
+- /app/event
+ignores:
+- "**"
+- "!/cmd/"
+- "!/model/"
+- "!/service/"
+- "!/utils/"
+- "!/go.mod/"
+- "!/go.sum/"

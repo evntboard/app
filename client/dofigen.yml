@@ -1,0 +1,53 @@
+---
+builders:
+- image: node:20
+  workdir: /home/node/app
+  adds:
+  - "package.json"
+  - "package-lock.json"
+  script:
+  - npm install --production
+- image: builder-0
+  workdir: /home/node/app
+  script:
+  - npm install
+- image: builder-1
+  workdir: /home/node/app
+  adds:
+  - "."
+  script:
+  - npx prisma generate
+  - npm run build --production
+image: builder-0
+workdir: /home/node/app
+artifacts:
+- builder: builder-2
+  source: "/home/node/app/.next"
+  destination: "/home/node/app/.next"
+- builder: builder-2
+  source: "/home/node/app/prisma"
+  destination: "/home/node/app/prisma"
+root:
+  script:
+  - chown 1000:1000 -R ./
+script:
+- npx prisma generate
+entrypoint:
+- /home/node/app/node_modules/.bin/next
+  #- npm
+cmd:
+  - start
+    #- run
+    #- dev
+ignores:
+- "**"
+- "!/src/"
+- "!/public/"
+- "!/prisma/"
+- "!/components.json"
+- "!/next.config.js"
+- "!/package-lock.json"
+- "!/package.json"
+- "!/postcss.config.js"
+- "!/tailwind.config.ts"
+- "!/tsconfig.json"
