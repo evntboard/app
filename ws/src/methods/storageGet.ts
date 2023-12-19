@@ -27,7 +27,7 @@ export const storageGet: SimpleJSONRPCMethod<{ clientId: string }> = async (rawP
 
   const params = storageGetSchema.safeParse(rawParams)
 
-  if (!params.success) {
+  if (params.success === false) {
     throw new JSONRPCErrorException(
       'Invalid params',
       213,

@@ -37,7 +37,7 @@ export const eventNew: SimpleJSONRPCMethod<{ clientId: string }> = async (rawPar
 
   const params = eventNewSchema.safeParse(rawParams)
 
-  if (!params.success) {
+  if (params.success === false) {
     return new JSONRPCErrorException(
       'Invalid params',
       213,

@@ -27,7 +27,7 @@ export const sessionRegister: SimpleJSONRPCMethod<{ clientId: string }> = async 
 
   const params = sessionRegisterSchema.safeParse(rawParams)
 
-  if (!params.success) {
+  if (params.success === false) {
     throw new JSONRPCErrorException(
       'Invalid params',
       213,
