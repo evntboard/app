@@ -123,7 +123,6 @@ redisSub.on('message', async (channel, raw) => {
 
   switch (type) {
     // `ch:oorganization:${organizationId}:storage`
-    // persistent || temporary
     case 'storage': {
       const message: { key: string, value: string } = JSON.parse(raw)
 
@@ -146,20 +145,7 @@ redisSub.on('message', async (channel, raw) => {
       if (clients.has(clientId)) {
         const client = clients.get(clientId)
         const message: { notification: boolean, channel: string, method: string, params: any } = JSON.parse(raw)
-        if (message.notification) {
-          try {
-            client?.rpc?.notify?.(message?.method, message?.params)
-            redis.publish(message?.channel, JSON.stringify({
-              result: null
-            }))
-          } catch (e: unknown) {
-            if (e instanceof Error) {
-              redis.publish(message?.channel, JSON.stringify({
-                error: e.message
-              }))
-            }
-          }
-        } else {
+        if (message.notification !== true) {
           try {
             const result = await client
               ?.rpc
@@ -178,6 +164,8 @@ redisSub.on('message', async (channel, raw) => {
               }))
             }
           }
+        } else {
+          client?.rpc?.notify?.(message?.method, message?.params)
         }
       }
       break
