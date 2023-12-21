@@ -1,6 +1,5 @@
 package service
 
-import "C"
 import (
 	"fmt"
 	"github.com/evntboard/app/event/model"

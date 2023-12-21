@@ -54,7 +54,7 @@ export default async function OrganizationScriptPage(props: Props) {
 
   return (
     <>
-      <aside className="hidden flex-col md:flex w-[200px] overflow-y-auto">
+      <aside className="hidden flex-col md:flex w-[200px] overflow-auto">
         <TreeViewGlobal
           node={tree}
           organizationId={organizationId}
@@ -70,7 +70,7 @@ export default async function OrganizationScriptPage(props: Props) {
           scriptId={scriptId}
         />
       </aside>
-      <main className="flex flex-1 flex-col overflow-hidden">
+      <main className="flex flex-1 flex-col">
         {!scriptType && (
           <div>Nothing selected</div>
         )}

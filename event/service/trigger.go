@@ -1,6 +1,5 @@
 package service
 
-import "C"
 import (
 	"errors"
 	"github.com/evntboard/app/event/model"
