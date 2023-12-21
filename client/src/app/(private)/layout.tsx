@@ -20,7 +20,7 @@ export default async function DashboardLayout({children}: DashboardLayoutProps) 
   }
 
   return (
-    <div className="flex flex-col h-screen w-screen space-y-6 overflow-auto">
+    <div className="flex flex-col h-screen w-screen space-y-6">
       <header className="sticky top-0 z-40 border-b bg-background">
         <div className="container flex h-16 items-center justify-between py-4">
           <MainNav items={dashboardConfig.mainNav}/>
