@@ -18,7 +18,7 @@ import {Icons} from "@/components/icons";
 import {toast} from "@/components/ui/use-toast";
 
 type Props = {
-  session: { sessionId: string },
+  session: { id: string },
 }
 
 export const EjectModule = ({session}: Props) => {
@@ -35,7 +35,7 @@ export const EjectModule = ({session}: Props) => {
   const handleOnSave = async () => {
     try {
       setIsSaving(true)
-      await ky.delete(`/api/organization/${organizationId}/session/${session.sessionId}`)
+      await ky.delete(`/api/organization/${organizationId}/session/${session.id}`)
 
       toast({
         description: "Module ejected",
@@ -84,7 +84,7 @@ export const EjectModule = ({session}: Props) => {
       </DialogTrigger>
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>Do you want to eject this &quot;{session?.sessionId}&quot; module ?</DialogTitle>
+          <DialogTitle>Do you want to eject this &quot;{session?.id}&quot; module ?</DialogTitle>
           <DialogDescription/>
           <DialogFooter>
             <Button onClick={handleOnReset} variant="secondary">Cancel</Button>

@@ -2,11 +2,10 @@ import * as z from "zod"
 import {getServerSession} from "next-auth/next";
 import {NextResponse} from "next/server";
 
-import {db} from "@/lib/db"
+import {nc, prisma} from "@/lib/singleton";
 import {authOptions} from "@/lib/auth";
 import {userHasWriteAccessToOrganization} from "@/lib/db/user";
-import {redis} from "@/lib/redis";
-import {gChOrgaStorage, gKeyOrgaStorage} from "@/lib/helper";
+import {gChOrgaStorage} from "@/lib/helper";
 
 const routeContextSchema = z.object({
   params: z.object({
@@ -34,28 +33,7 @@ export async function DELETE(
       return NextResponse.json({error: 'Unauthorized'}, {status: 403})
     }
 
-    const keyStorage = gKeyOrgaStorage(params.organizationId)
-    const channelStorage = gChOrgaStorage(params.organizationId)
-
-    if (params.storageKey.startsWith('tmp:')) {
-      const storageKeys = await redis.hkeys(keyStorage)
-      const existInRedis = storageKeys.includes(params.storageKey)
-
-      if (!existInRedis) {
-        return NextResponse.json({error: 'Unauthorized'}, {status: 404})
-      }
-
-      await redis.hdel(keyStorage, params.storageKey)
-
-      redis.publish(channelStorage, JSON.stringify({
-        key: params.storageKey,
-        value: null
-      }))
-
-      return new Response(null, {status: 204})
-    }
-
-    const storageCount = await db.storage.count({
+    const storageCount = await prisma.storage.count({
       where: {
         key: params.storageKey,
         organizationId: params.organizationId,
@@ -67,19 +45,16 @@ export async function DELETE(
       return NextResponse.json({error: 'Unauthorized'}, {status: 404})
     }
 
-    await db.storage.delete({
+    await prisma.storage.delete({
       where: {
         key_organizationId: {
           key: params.storageKey,
           organizationId: params.organizationId
         }
       },
-    })
+    });
 
-    redis.publish(channelStorage, JSON.stringify({
-      key: params.storageKey,
-      value: null
-    }))
+    (await nc).publish(gChOrgaStorage(params.organizationId), params.storageKey)
 
     return new Response(null, {status: 204})
   } catch (error) {

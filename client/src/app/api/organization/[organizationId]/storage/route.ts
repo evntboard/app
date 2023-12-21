@@ -3,11 +3,9 @@ import {NextResponse} from "next/server";
 import * as z from "zod"
 
 import {authOptions} from "@/lib/auth"
-import {db} from "@/lib/db"
+import {nc, prisma} from "@/lib/singleton";
 import {userHasWriteAccessToOrganization} from "@/lib/db/user";
-import {redis} from "@/lib/redis";
-import {gChOrgaStorage, gKeyOrgaStorage} from "@/lib/helper";
-import {jsonParse} from "@/lib/utils";
+import {gChOrgaStorage} from "@/lib/helper";
 
 const routeContextSchema = z.object({
   params: z.object({
@@ -44,26 +42,7 @@ export async function POST(req: Request, context: z.infer<typeof routeContextSch
       return NextResponse.json({error: 'new cannot be a key name !'}, {status: 422})
     }
 
-    const keyStorage = gKeyOrgaStorage(params.organizationId)
-    const channelStorage = gChOrgaStorage(params.organizationId)
-
-    if (body.key.startsWith('tmp:')) {
-
-      await redis.hset(keyStorage, body.key, JSON.stringify(body.value))
-      const data = await redis.hget(keyStorage, body.key)
-
-      redis.publish(channelStorage, JSON.stringify({
-        key: body.key,
-        value: jsonParse(data ?? "")
-      }))
-
-      return NextResponse.json({
-        key: body.key,
-        value: jsonParse(data ?? ""),
-      })
-    }
-
-    const entity = await db.storage.upsert({
+    const entity = await prisma.storage.upsert({
       where: {
         key_organizationId: {
           key: body.key,
@@ -79,19 +58,15 @@ export async function POST(req: Request, context: z.infer<typeof routeContextSch
         value: body.value,
         organizationId: params.organizationId,
       },
-    })
+    });
 
-    redis.publish(channelStorage, JSON.stringify({
-      key: entity.key,
-      value: entity.value
-    }))
+    (await nc).publish(gChOrgaStorage(params.organizationId), body.key)
 
     return NextResponse.json({
       key: entity.key,
       value: entity.value,
     })
   } catch (error) {
-    console.log(error)
     if (error instanceof z.ZodError) {
       return new Response(JSON.stringify(error.issues), {status: 422})
     }

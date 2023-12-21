@@ -3,12 +3,13 @@ import {JSONRPCErrorException, SimpleJSONRPCMethod} from 'json-rpc-2.0'
 import {storageSetSchema} from '../schema'
 import {prisma} from '../prisma'
 import {clients} from '../sessions'
-import {redis} from '../redis'
-import {gChOrgaStorage, gKeyOrgaStorage} from "../helper";
+import {gChOrgaStorage} from "../helper";
+import {getSessionById} from "../db";
+import {nc} from "../nats";
 
 export const storageSet: SimpleJSONRPCMethod<{ clientId: string }> = async (rawParams, {clientId}) => {
   if (!clients.has(clientId)) {
-    return new JSONRPCErrorException(
+    throw new JSONRPCErrorException(
       'Unknown client',
       213,
       "Unknown client"
@@ -17,11 +18,13 @@ export const storageSet: SimpleJSONRPCMethod<{ clientId: string }> = async (rawP
 
   const client = clients.get(clientId)
 
-  if (!client || !client.organizationId || !client.code || !client.name) {
-    return new JSONRPCErrorException(
-      'Unknown client',
+  const session = await getSessionById(clientId)
+
+  if (!client || !session) {
+    throw new JSONRPCErrorException(
+      'Unknown client or not connected',
       213,
-      "Unknown client"
+      "Unknown client or not connected"
     )
   }
 
@@ -35,46 +38,24 @@ export const storageSet: SimpleJSONRPCMethod<{ clientId: string }> = async (rawP
     )
   }
 
-  const storageChannel = gChOrgaStorage(client.organizationId)
-
-  if (params.data.key.startsWith('tmp:')) {
-    const storageKey = gKeyOrgaStorage(client.organizationId)
-
-    await redis.hset(storageKey, params.data.key, JSON.stringify(params.data.value))
-    const data = await redis.hget(storageKey, params.data.key)
-
-    const parsedData = JSON.parse(data ?? "")
-
-    redis.publish(storageChannel, JSON.stringify({
-      key: params.data.key,
-      value: parsedData
-    }))
-
-    return
-  } else {
-    const entity = await prisma.storage.upsert({
-      where: {
-        key_organizationId: {
-          key: params.data.key,
-          organizationId: client.organizationId,
-        }
-      },
-      update: {
-        value: params.data.value,
-        organizationId: client.organizationId,
-      },
-      create: {
+  const entity = await prisma.storage.upsert({
+    where: {
+      key_organizationId: {
         key: params.data.key,
-        value: params.data.value,
-        organizationId: client.organizationId,
-      },
-    })
-
-    redis.publish(storageChannel, JSON.stringify({
+        organizationId: session.module.organizationId,
+      }
+    },
+    update: {
+      value: params.data.value,
+    },
+    create: {
       key: params.data.key,
-      value: entity.value
-    }))
+      value: params.data.value,
+      organizationId: session.module.organizationId,
+    },
+  })
 
-    return entity.value
-  }
+  nc?.publish(gChOrgaStorage(session.module.organizationId), params.data.key)
+
+  return entity.value
 }

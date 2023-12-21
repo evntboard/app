@@ -42,17 +42,6 @@ export const OrgaNav = ({organization}: Props) => {
             <span>Script</span>
           </div>
         </Link>
-        <Link href={`/organization/${organization.id}/realtime-events`}>
-          <div
-            className={cn(
-              "group flex items-center rounded-md px-3 py-2 text-sm font-medium hover:bg-accent hover:text-accent-foreground",
-              path.startsWith(`/organization/${organization.id}/realtime-event`) ? "bg-accent" : "transparent",
-            )}
-          >
-            <Icons.realtime className="mr-2 h-4 w-4"/>
-            <span>Realtime</span>
-          </div>
-        </Link>
         <Link href={`/organization/${organization.id}/events`}>
           <div
             className={cn(
@@ -60,8 +49,19 @@ export const OrgaNav = ({organization}: Props) => {
               path.startsWith(`/organization/${organization.id}/event`) ? "bg-accent" : "transparent",
             )}
           >
+            <Icons.realtime className="mr-2 h-4 w-4"/>
+            <span>Realtime</span>
+          </div>
+        </Link>
+        <Link href={`/organization/${organization.id}/custom-events`}>
+          <div
+            className={cn(
+              "group flex items-center rounded-md px-3 py-2 text-sm font-medium hover:bg-accent hover:text-accent-foreground",
+              path.startsWith(`/organization/${organization.id}/custom-event`) ? "bg-accent" : "transparent",
+            )}
+          >
             <Icons.event className="mr-2 h-4 w-4"/>
-            <span>Events</span>
+            <span>Custom events</span>
           </div>
         </Link>
         <Link href={`/organization/${organization.id}/storages`}>

@@ -1,7 +1,7 @@
-import {db} from "@/lib/db";
+import {nc, prisma} from "@/lib/singleton";;
 
 export async function getSharedByIdAndOrganization(organizationId: string, userId: string, scriptId: string) {
-  return db.shared.findFirst({
+  return prisma.shared.findFirst({
     where: {
       id: scriptId,
       organizationId,

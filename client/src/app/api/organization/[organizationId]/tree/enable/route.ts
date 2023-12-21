@@ -3,7 +3,7 @@ import {getServerSession} from "next-auth/next";
 import {authOptions} from "@/lib/auth";
 import {userHasWriteAccessToOrganization} from "@/lib/db/user";
 import {NextRequest, NextResponse} from "next/server";
-import {db} from "@/lib/db";
+import {nc, prisma} from "@/lib/singleton";;
 
 const routeContextSchema = z.object({
   params: z.object({
@@ -29,7 +29,7 @@ export async function GET(req: NextRequest, context: z.infer<typeof routeContext
 
     const path = req.nextUrl.searchParams.get('path') ?? '/'
 
-    const triggerP = db.trigger.updateMany({
+    const triggerP = prisma.trigger.updateMany({
       where: {
         organizationId: params.organizationId,
         name: {
@@ -41,7 +41,7 @@ export async function GET(req: NextRequest, context: z.infer<typeof routeContext
       },
     });
 
-    const sharedP = db.shared.updateMany({
+    const sharedP = prisma.shared.updateMany({
       where: {
         organizationId: params.organizationId,
         name: {

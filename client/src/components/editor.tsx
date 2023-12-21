@@ -22,12 +22,16 @@ export const Editor = forwardRef((props: any, ref) => {
     <div className="flex flex-1 flex-col gap-2">
       <Dialog>
         <DialogTrigger asChild>
-          <div>
-            <Button type="button" size="sm" variant="outline">
-              <Icons.zoom className="mr-2  h-5 w-5"/>
-              Fullscreen
-            </Button>
-          </div>
+          {
+            props?.fullscreen !== false && (
+              <div>
+                <Button type="button" size="sm" variant="outline">
+                  <Icons.zoom className="mr-2  h-5 w-5"/>
+                  Fullscreen
+                </Button>
+              </div>
+            )
+          }
         </DialogTrigger>
         <DialogContent className="h-full w-full max-w-full max-h-full">
           <DialogHeader>

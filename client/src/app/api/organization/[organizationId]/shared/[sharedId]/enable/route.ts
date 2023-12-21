@@ -1,6 +1,6 @@
 import * as z from "zod"
 
-import {db} from "@/lib/db"
+import {nc, prisma} from "@/lib/singleton";
 import {getServerSession} from "next-auth/next";
 import {authOptions} from "@/lib/auth";
 import {userHasWriteAccessToOrganization} from "@/lib/db/user";
@@ -30,7 +30,7 @@ export async function GET(req: NextRequest, context: z.infer<typeof routeContext
     }
 
 
-    await db.shared.update({
+    await prisma.shared.update({
       where: {
         id: params.sharedId,
         organizationId: params.organizationId,

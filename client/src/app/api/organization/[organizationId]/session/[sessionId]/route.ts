@@ -2,10 +2,12 @@ import * as z from "zod";
 import {getServerSession} from "next-auth/next";
 import {NextResponse} from "next/server";
 
+import {nc, prisma} from "@/lib/singleton";
 import {authOptions} from "@/lib/auth";
 import {userHasWriteAccessToOrganization} from "@/lib/db/user";
-import {redis} from "@/lib/redis";
-import {gChOrgaModuleEject, gKeyOrgaModules} from "@/lib/helper";
+import {gChOrgaModuleEject} from "@/lib/helper";
+
+;
 
 const routeContextSchema = z.object({
   params: z.object({
@@ -33,22 +35,16 @@ export async function DELETE(
       return NextResponse.json({error: 'Unauthorized'}, {status: 403})
     }
 
-    const modulesKey = gKeyOrgaModules(params.organizationId)
+    await prisma.moduleSession.delete({
+      where: {
+        id: params.sessionId
+      }
+    });
 
-    // check if redis have this key !
-    const moduleSession = await redis.hget(modulesKey, params.sessionId)
-
-    if (!moduleSession) {
-      return NextResponse.json({error: 'No module connected for this sessionId'}, {status: 500})
-    }
-
-    await redis.hdel(modulesKey, params.sessionId)
-
-    redis.publish(gChOrgaModuleEject(params.organizationId, params.sessionId), '')
+    (await nc).publish(gChOrgaModuleEject(params.organizationId, params.sessionId))
 
     return new Response(null, {status: 204})
   } catch (error) {
-    console.log(error)
     if (error instanceof z.ZodError) {
       return NextResponse.json({error}, {status: 422})
     }

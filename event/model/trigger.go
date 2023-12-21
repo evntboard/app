@@ -1,30 +1,14 @@
 package model
 
-type Trigger struct {
-	ID             string             `gorm:"column:id;primaryKey"`
-	OrganizationId string             `gorm:"column:organization_id"`
-	Name           string             `gorm:"column:name;unique;index"`
-	Enable         bool               `gorm:"column:enable"`
-	Channel        string             `gorm:"column:channel"`
-	Code           string             `gorm:"column:code"`
-	Conditions     []TriggerCondition `gorm:"constraint:OnDelete:CASCADE"`
-}
-
-func (Trigger) TableName() string {
-	return "trigger"
-}
-
-type TriggerCondition struct {
-	ID        string `gorm:"column:id;primaryKey"`
-	TriggerID string `gorm:"column:trigger_id"`
-	Name      string `gorm:"column:name;index"`
-	Enable    bool   `gorm:"column:enable"`
-	Code      string `gorm:"column:code"`
-	Type      string `gorm:"column:type"`
-	Timeout   int    `gorm:"column:timeout"`
-	Trigger   Trigger
-}
-
-func (TriggerCondition) TableName() string {
-	return "condition"
+type TriggerConditionResult struct {
+	OrganizationID   string `db:"organization_id"`
+	TriggerID        string `db:"trigger_id"`
+	TriggerName      string `db:"trigger_name"`
+	TriggerCode      string `db:"trigger_code"`
+	TriggerChannel   string `db:"trigger_channel"`
+	ConditionID      string `db:"condition_id"`
+	ConditionName    string `db:"condition_name"`
+	ConditionCode    string `db:"condition_code"`
+	ConditionType    string `db:"condition_type"`
+	ConditionTimeout int    `db:"condition_timeout"`
 }

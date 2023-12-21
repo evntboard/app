@@ -6,6 +6,7 @@ import {useRouter} from "next/navigation";
 import {useForm} from "react-hook-form";
 import {zodResolver} from "@hookform/resolvers/zod";
 import * as z from "zod";
+import {Prisma} from "@prisma/client";
 
 import {storageSchema} from "@/lib/validations/storage";
 import {cn, jsonParse} from "@/lib/utils";
@@ -14,14 +15,16 @@ import {toast} from "@/components/ui/use-toast";
 import {Icons} from "@/components/icons";
 import {Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage} from "@/components/ui/form";
 import {Input} from "@/components/ui/input";
-import {Select, SelectContent, SelectItem, SelectTrigger, SelectValue} from "@/components/ui/select";
 import {Editor} from "@/components/editor";
 
 type FormData = z.infer<typeof storageSchema>
 
 type Props = {
   organizationId: string,
-  defaultValues: FormData,
+  defaultValues: {
+    key: string,
+    value: Prisma.JsonValue
+  },
   isCreating?: boolean,
 }
 

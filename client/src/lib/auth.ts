@@ -1,13 +1,13 @@
 import {AuthOptions} from "next-auth";
 import EmailProvider from "next-auth/providers/email";
-import DiscordProvider from "next-auth/providers/discord";
 import GithubProvider from "next-auth/providers/github";
 
 import {PrismaAdapter} from "@auth/prisma-adapter";
-import {db} from "@/lib/db";
+import {prisma} from "@/lib/singleton";
 
 export const authOptions: AuthOptions = {
-  adapter: PrismaAdapter(db),
+  // @ts-ignore
+  adapter: PrismaAdapter(prisma),
   session: {
     strategy: "jwt",
   },
@@ -27,7 +27,7 @@ export const authOptions: AuthOptions = {
       },
       //maxAge: 2 * 60 * 60, // 2h
       // sendVerificationRequest: async ({identifier, url, provider}) => {
-      //     const user = await db.user.findUnique({
+      //     const user = await prisma.user.findUnique({
       //         where: {
       //             email: identifier,
       //         },
@@ -70,10 +70,6 @@ export const authOptions: AuthOptions = {
       //     }
       // },
     }),
-    DiscordProvider({
-      clientId: String(process.env.DISCORD_ID),
-      clientSecret: String(process.env.DISCORD_SECRET),
-    }),
     GithubProvider({
       clientId: String(process.env.GITHUB_ID),
       clientSecret: String(process.env.GITHUB_SECRET),
@@ -91,7 +87,7 @@ export const authOptions: AuthOptions = {
       return session
     },
     async jwt({token, user}: any) {
-      const dbUser = await db.user.findFirst({
+      const dbUser = await prisma.user.findFirst({
         where: {
           email: token.email,
         },

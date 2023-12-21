@@ -3,7 +3,7 @@ import {NextRequest, NextResponse} from "next/server";
 import * as z from "zod"
 
 import {authOptions} from "@/lib/auth"
-import {db} from "@/lib/db"
+import {nc, prisma} from "@/lib/singleton";
 import {userHasReadAccessToOrganization, userHasWriteAccessToOrganization} from "@/lib/db/user";
 import {triggerSchema} from "@/lib/validations/trigger";
 import {Condition} from "@prisma/client";
@@ -30,7 +30,7 @@ export async function GET(req: NextRequest, context: z.infer<typeof routeContext
       return NextResponse.json({error: 'Unauthorized'}, {status: 403})
     }
 
-    const entities = await db.trigger.findMany({
+    const entities = await prisma.trigger.findMany({
       select: {
         id: true,
         name: true,
@@ -80,7 +80,7 @@ export async function POST(req: Request, context: z.infer<typeof routeContextSch
     const json = await req.json()
     const body = triggerSchema.parse(json)
 
-    const entity = await db.trigger.create({
+    const entity = await prisma.trigger.create({
       select: {
         id: true,
         name: true,

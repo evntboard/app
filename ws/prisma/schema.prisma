@@ -67,16 +67,17 @@ model VerificationToken {
 }
 
 model Organization {
-  id        String               @id @default(cuid())
-  name      String               @unique
-  creator   User?                @relation(fields: [creatorId], references: [id])
-  creatorId String?              @map(name: "creator_id")
-  users     UsersOrganizations[]
-  shareds   Shared[]
-  triggers  Trigger[]
-  modules   Module[]
-  storages  Storage[]
-  events    Event[]
+  id           String               @id @default(cuid())
+  name         String               @unique
+  creator      User?                @relation(fields: [creatorId], references: [id])
+  creatorId    String?              @map(name: "creator_id")
+  users        UsersOrganizations[]
+  shareds      Shared[]
+  triggers     Trigger[]
+  modules      Module[]
+  storages     Storage[]
+  events       Event[]
+  customEvents CustomEvent[]
 
   @@map("organization")
 }
@@ -115,6 +116,7 @@ model Trigger {
   organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade, onUpdate: Cascade)
   organizationId String       @map(name: "organization_id")
   conditions     Condition[]
+  processes      Process[]
 
   @@unique([name, organizationId])
   @@map("trigger")
@@ -141,13 +143,15 @@ model Condition {
 }
 
 model Module {
-  id             String        @id @default(cuid())
+  id             String           @id @default(cuid())
   code           String
   name           String
   token          String
-  organization   Organization  @relation(fields: [organizationId], references: [id], onDelete: Cascade, onUpdate: Cascade)
-  organizationId String        @map(name: "organization_id")
+  organization   Organization     @relation(fields: [organizationId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  organizationId String           @map(name: "organization_id")
   params         ModuleParam[]
+  sessions       ModuleSession[]
+  requests       ProcessRequest[]
 
   @@unique([name, organizationId])
   @@map("module")
@@ -164,6 +168,17 @@ model ModuleParam {
   @@map("module_params")
 }
 
+model ModuleSession {
+  id          String    @id
+  subs        String[]  @default([])
+  lastMessage DateTime? @map(name: "last_message") @db.Timestamptz
+  module      Module    @relation(fields: [moduleId], references: [id], onDelete: Cascade)
+  moduleId    String    @map(name: "module_id")
+
+  @@unique([id, moduleId])
+  @@map("module_session")
+}
+
 model Storage {
   id             String       @id @default(cuid())
   key            String
@@ -175,12 +190,88 @@ model Storage {
   @@map("storage")
 }
 
-model Event {
+model CustomEvent {
   id             String       @id @default(cuid())
   name           String
+  description    String
   payload        Json
   organization   Organization @relation(fields: [organizationId], references: [id])
   organizationId String       @map(name: "organization_id")
 
+  @@map("custom_event")
+}
+
+enum EventStatus {
+  QUEUED
+  CONSUMED
+  DONE
+}
+
+model Event {
+  id             String       @id @default(cuid())
+  name           String
+  payload        Json
+  emitterCode    String       @map(name: "emitter_code")
+  emitterName    String       @map(name: "emitter_name")
+  emittedAt      DateTime     @map(name: "emitted_at")
+  status         EventStatus  @default(QUEUED)
+  organization   Organization @relation(fields: [organizationId], references: [id])
+  organizationId String       @map(name: "organization_id")
+  processes      Process[]
+
   @@map("event")
+}
+
+model Process {
+  id        String           @id @default(cuid())
+  trigger   Trigger          @relation(fields: [triggerId], references: [id])
+  triggerId String           @map(name: "trigger_id")
+  event     Event            @relation(fields: [eventId], references: [id])
+  eventId   String           @map(name: "event_id")
+  startDate DateTime?        @map(name: "start_date") @db.Timestamptz
+  endDate   DateTime?        @map(name: "end_date") @db.Timestamptz
+  error     String?
+  executed  Boolean          @default(false)
+  logs      ProcessLog[]
+  requests  ProcessRequest[]
+
+  @@unique([triggerId, eventId])
+  @@map("process")
+}
+
+model ProcessLog {
+  id   String    @id @default(cuid())
+  log  Json?
+  date DateTime? @map(name: "date") @db.Timestamptz
+
+  process   Process @relation(fields: [processId], references: [id], onDelete: Cascade)
+  processId String  @map(name: "process_id")
+
+  @@map("process_log")
+}
+
+model ProcessRequest {
+  id           String    @id @default(cuid())
+  notification Boolean   @default(false)
+  method       String
+  params       Json?
+  result       Json?
+  error        Json?
+  requestDate  DateTime? @map(name: "request_date") @db.Timestamptz
+  responseDate DateTime? @map(name: "response_date") @db.Timestamptz
+
+  module   Module @relation(fields: [moduleId], references: [id], onDelete: Cascade)
+  moduleId String @map(name: "module_id")
+
+  process   Process @relation(fields: [processId], references: [id], onDelete: Cascade)
+  processId String  @map(name: "process_id")
+
+  @@map("process_request")
+}
+
+model Lock {
+  key  String    @id
+  date DateTime? @db.Timestamptz
+
+  @@map("lock")
 }

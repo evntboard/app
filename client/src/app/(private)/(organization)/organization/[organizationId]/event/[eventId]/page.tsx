@@ -1,15 +1,15 @@
 import * as React from "react";
-import {notFound, redirect} from "next/navigation";
+import {redirect} from "next/navigation";
 import Link from "next/link";
 
 import {getCurrentUser} from "@/lib/session";
 import {authOptions} from "@/lib/auth";
+import {getEventProcessAndLogById} from "@/lib/db/event";
 import {cn} from "@/lib/utils";
 import {Icons} from "@/components/icons";
 import {buttonVariants} from "@/components/ui/button";
-import {EventForm} from "../event-form";
-import {getEventByIdAndOrganization} from "@/lib/db/event";
 
+import {ProcessEvent} from "./process-event";
 
 type Props = {
   params: {
@@ -25,17 +25,17 @@ export default async function OrganizationEventByIdPage(props: Props) {
     redirect(authOptions?.pages?.signIn || "/login")
   }
 
-  const eventData = await getEventByIdAndOrganization(props.params.organizationId, user.id, props.params.eventId)
+  const data = await getEventProcessAndLogById(props.params.organizationId, user.id, props.params.eventId)
 
-  if (!eventData) {
-    return notFound()
+  if (!data) {
+    return null
   }
 
   return (
     <div className="flex flex-1 flex-col gap-2 overflow-hidden">
       <div className="flex justify-between">
         <h1 className="font-heading text-xl">
-          Event
+          Event {data.name}
         </h1>
         <div className="flex items-center gap-2">
           <Link
@@ -49,10 +49,13 @@ export default async function OrganizationEventByIdPage(props: Props) {
           </Link>
         </div>
       </div>
-      <EventForm
-        defaultValues={eventData}
-        organizationId={props.params.organizationId}
-      />
+      <div>
+        <ProcessEvent
+          data={data.processes}
+          eventId={props.params.eventId}
+          organizationId={props.params.organizationId}
+        />
+      </div>
     </div>
   )
 }

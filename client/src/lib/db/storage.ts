@@ -1,8 +1,5 @@
-import {db} from "@/lib/db";
+import {nc, prisma} from "@/lib/singleton";;
 import {userHasReadAccessToOrganization} from "@/lib/db/user";
-import {redis} from "@/lib/redis";
-import {gKeyOrgaStorage} from "@/lib/helper";
-import {jsonParse} from "@/lib/utils";
 
 export async function getStorageByUserIdAndOrganizationIdAndKey(organizationId: string, userId: string, storageKey: string) {
   const hasAccess = await userHasReadAccessToOrganization(organizationId, userId)
@@ -11,20 +8,7 @@ export async function getStorageByUserIdAndOrganizationIdAndKey(organizationId: 
     return Promise.reject("no access")
   }
 
-  if (storageKey.startsWith('tmp:')) {
-    const data = await redis.hget(gKeyOrgaStorage(organizationId), storageKey)
-
-    if (!data) {
-      return null
-    }
-
-    return ({
-      key: storageKey,
-      value: jsonParse(data ?? "")
-    })
-  }
-
-  const persistent = await db.storage.findFirst({
+  const persistent = await prisma.storage.findFirst({
     select: {
       key: true,
       value: true
@@ -66,7 +50,7 @@ export async function getStoragesByUserIdAndOrganizationId(organizationId: strin
     return Promise.reject("no access")
   }
 
-  const persistent = await db.storage.findMany({
+  return prisma.storage.findMany({
     select: {
       key: true,
       value: true
@@ -88,12 +72,5 @@ export async function getStoragesByUserIdAndOrganizationId(organizationId: strin
         ]
       }
     }
-  })
-
-
-  const data = await redis.hgetall(gKeyOrgaStorage(organizationId))
-
-  const temporary = Object.entries(data).map(([key, value]) => ({key, value: jsonParse(value ?? "")}))
-
-  return [...persistent, ...temporary]
+  });
 }

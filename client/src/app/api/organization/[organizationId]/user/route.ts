@@ -2,7 +2,7 @@ import * as z from "zod"
 
 import {NextRequest, NextResponse} from "next/server";
 import {getServerSession} from "next-auth/next";
-import {db} from "@/lib/db"
+import {nc, prisma} from "@/lib/singleton";
 import {authOptions} from "@/lib/auth";
 import {userHasReadAccessToOrganization, userHasWriteAccessToOrganization} from "@/lib/db/user";
 import {userIdSchema} from "@/lib/validations/user";
@@ -36,7 +36,7 @@ export async function GET(req: NextRequest, context: z.infer<typeof routeContext
       return NextResponse.json({error: 'searchParams "search" have to be at least 3 length'}, {status: 422})
     }
 
-    const entities = await db.user.findMany({
+    const entities = await prisma.user.findMany({
       select: {
         id: true,
         name: true,
@@ -93,7 +93,7 @@ export async function POST(req: NextRequest, context: z.infer<typeof routeContex
     const json = await req.json()
     const body = userIdSchema.parse(json)
 
-    await db.usersOrganizations.create({
+    await prisma.usersOrganizations.create({
       data: {
         organizationId: params.organizationId,
         userId: body.userId,

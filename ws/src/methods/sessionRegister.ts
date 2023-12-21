@@ -1,14 +1,12 @@
 import {JSONRPCErrorException, SimpleJSONRPCMethod} from 'json-rpc-2.0'
 
 import {prisma} from '../prisma'
-import {redis, redisSub} from '../redis'
 import {sessionRegisterSchema} from '../schema'
 import {clients} from '../sessions'
-import {gChOrgaModule, gChOrgaModuleEject, gChOrgaStorage, gKeyOrgaModules} from "../helper";
 
 export const sessionRegister: SimpleJSONRPCMethod<{ clientId: string }> = async (rawParams, {clientId}) => {
   if (!clients.has(clientId)) {
-    return new JSONRPCErrorException(
+    throw new JSONRPCErrorException(
       'Unknown client',
       213,
       "Unknown client"
@@ -18,7 +16,7 @@ export const sessionRegister: SimpleJSONRPCMethod<{ clientId: string }> = async 
   const client = clients.get(clientId)
 
   if (!client) {
-    return new JSONRPCErrorException(
+    throw new JSONRPCErrorException(
       'Unknown client',
       213,
       "Unknown client"
@@ -28,6 +26,7 @@ export const sessionRegister: SimpleJSONRPCMethod<{ clientId: string }> = async 
   const params = sessionRegisterSchema.safeParse(rawParams)
 
   if (params.success === false) {
+    client?.ws?.close?.()
     throw new JSONRPCErrorException(
       'Invalid params',
       213,
@@ -37,6 +36,7 @@ export const sessionRegister: SimpleJSONRPCMethod<{ clientId: string }> = async 
 
   const module = await prisma.module.findFirst({
     select: {
+      id: true,
       organizationId: true,
       params: {
         select: {
@@ -53,6 +53,7 @@ export const sessionRegister: SimpleJSONRPCMethod<{ clientId: string }> = async 
   })
 
   if (!module) {
+    client?.ws?.close?.()
     throw new JSONRPCErrorException(
       'Unknown Module',
       12,
@@ -60,11 +61,23 @@ export const sessionRegister: SimpleJSONRPCMethod<{ clientId: string }> = async 
     )
   }
 
-  const modulesKey = gKeyOrgaModules(module.organizationId)
-
-  const keyExist = await redis.hexists(modulesKey, clientId)
+  const keyExist = await prisma.moduleSession.count({
+    where: {
+      OR: [
+        {id: clientId},
+        {
+          module: {
+            name: params.data.name,
+            code: params.data.code,
+            organizationId: module.organizationId
+          }
+        }
+      ]
+    }
+  })
 
   if (keyExist) {
+    client?.ws?.close?.()
     throw new JSONRPCErrorException(
       'Module already connected',
       12,
@@ -72,34 +85,18 @@ export const sessionRegister: SimpleJSONRPCMethod<{ clientId: string }> = async 
     )
   }
 
-  const modules = await redis.hgetall(modulesKey)
-
-  // there is always only ONE module with code:name for an orga
-  const anotherConnected = Object.entries(modules).find(([_, moduleName]) => moduleName === `${params.data.code}:${params.data.name}`)
-
-  if (anotherConnected) {
-    throw new JSONRPCErrorException(
-      'Already connected',
-      12,
-      'Already connected'
-    )
-  }
-
   console.log(`REGISTER MODULE ${params.data.code}:${params.data.name}`)
 
-  clients.set(clientId, {
-    ...client,
-    code: params.data.code,
-    name: params.data.name,
-    organizationId: module.organizationId,
-    subs: params.data.subs ?? []
+  await prisma.moduleSession.create({
+    data: {
+      id: clientId,
+      moduleId: module.id,
+      subs: params.data.subs ?? [],
+      lastMessage: new Date()
+    }
   })
 
-  await redis.hset(modulesKey, clientId, `${params.data.code}:${params.data.name}`)
-
-  redisSub.subscribe(gChOrgaModule(module.organizationId, clientId))
-  redisSub.subscribe(gChOrgaStorage(module.organizationId))
-  redisSub.subscribe(gChOrgaModuleEject(module.organizationId, clientId))
+  // TODO PUBLISH NEW SESSION nc?.publish()
 
   return module.params
 }

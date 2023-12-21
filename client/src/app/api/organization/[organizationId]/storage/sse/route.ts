@@ -1,12 +1,11 @@
 import {NextRequest, NextResponse} from "next/server";
 import * as z from "zod";
 import {getServerSession} from "next-auth/next";
-import Redis from "ioredis";
 
 import {authOptions} from "@/lib/auth";
-import {redisConfig} from "@/lib/redis";
 import {userHasWriteAccessToOrganization} from "@/lib/db/user";
 import {gChOrgaStorage} from "@/lib/helper";
+import {nc, prisma} from "@/lib/singleton";
 
 const routeContextSchema = z.object({
   params: z.object({
@@ -30,35 +29,37 @@ export async function GET(req: NextRequest, context: z.infer<typeof routeContext
       return NextResponse.json({error: 'Unauthorized'}, {status: 403})
     }
 
-    const channel = gChOrgaStorage(params.organizationId)
-
-    const souscripteur = new Redis(redisConfig);
+    const sub = (await nc).subscribe(gChOrgaStorage(params.organizationId))
 
     const stream = new ReadableStream({
       async start(controller) {
-        souscripteur.on("message", (canal, message) => {
-          if (canal === channel) {
-            controller.enqueue(`data:${message}\n\n`);
+        try {
+          for await (const m of sub) {
+            const storage = await prisma.storage.findFirst({
+              select: {
+                key: true,
+                value: true,
+              },
+              where: {
+                organizationId: params.organizationId,
+                key: m.string()
+              }
+            })
+            if (!controller.desiredSize || !storage) {
+              return
+            }
+            controller.enqueue(`data:${JSON.stringify(storage)}\n\n`);
           }
-        });
-
-        souscripteur.on("error", (erreur) => {
-          controller.error(erreur);
-        });
-
-        souscripteur.on("end", () => {
-          if (!controller.desiredSize) {
-            return;
-          }
-
           controller.close();
-        });
-
-        souscripteur.subscribe(channel);
+        } catch (e) {
+          if (!controller.desiredSize) {
+            return
+          }
+          controller.close();
+        }
       },
-      cancel() {
-        souscripteur.unsubscribe(channel);
-        souscripteur.quit();
+      async cancel() {
+        sub.unsubscribe()
       },
     });
 

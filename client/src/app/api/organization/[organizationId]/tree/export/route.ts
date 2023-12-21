@@ -2,7 +2,7 @@ import * as z from "zod"
 import {getServerSession} from "next-auth/next";
 import {NextRequest, NextResponse} from "next/server";
 
-import {db} from "@/lib/db"
+import {nc, prisma} from "@/lib/singleton";
 import {authOptions} from "@/lib/auth";
 import {userHasWriteAccessToOrganization} from "@/lib/db/user";
 
@@ -30,7 +30,7 @@ export async function GET(req: NextRequest, context: z.infer<typeof routeContext
 
     const path = req.nextUrl.searchParams.get('path') ?? '/'
 
-    const triggersP = db.trigger.findMany({
+    const triggersP = prisma.trigger.findMany({
       select: {
         name:true,
         code: true,
@@ -52,7 +52,7 @@ export async function GET(req: NextRequest, context: z.infer<typeof routeContext
       },
     })
 
-    const sharedsP = db.shared.findMany({
+    const sharedsP = prisma.shared.findMany({
       select: {
         name:true,
         code: true,

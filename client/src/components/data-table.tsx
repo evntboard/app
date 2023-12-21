@@ -1,6 +1,6 @@
 "use client"
 import React, {Fragment, useRef, useState} from 'react'
-import {useVirtual} from '@tanstack/react-virtual'
+import {useVirtualizer} from '@tanstack/react-virtual'
 import {
   ColumnDef,
   ExpandedState,
@@ -67,12 +67,15 @@ export function DataTable<TData, TValue>({
   const tableContainerRef = useRef(null)
 
   const {rows} = table.getRowModel()
-  const rowVirtualizer = useVirtual({
-    parentRef: tableContainerRef,
-    size: rows.length,
+  const rowVirtualizer = useVirtualizer({
+    getScrollElement: () => tableContainerRef.current,
+    estimateSize: () => 50,
+    count: rows.length,
     overscan: 25
   })
-  const {virtualItems: virtualRows, totalSize} = rowVirtualizer
+
+  const totalSize = rowVirtualizer.getTotalSize()
+  const virtualRows = rowVirtualizer.getVirtualItems()
 
   const paddingTop = virtualRows.length > 0 ? virtualRows?.[0]?.start || 0 : 0
   const paddingBottom =

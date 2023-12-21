@@ -1,12 +1,8 @@
 package model
 
-type PersistentStorage struct {
-	ID             string `gorm:"primaryKey" json:"id"`
-	Key            string `json:"key"`
-	Value          []byte `gorm:"type:jsonb" json:"value"`
-	OrganizationId string `gorm:"column:organization_id"`
-}
-
-func (PersistentStorage) TableName() string {
-	return "storage"
+type Storage struct {
+	ID             string `db:"id"`
+	Key            string `db:"key"`
+	Value          any    `db:"value"`
+	OrganizationId string `db:"organization_id"`
 }
