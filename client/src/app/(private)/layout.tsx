@@ -1,3 +1,4 @@
+import React from "react";
 import {notFound} from "next/navigation"
 
 import {dashboardConfig} from "@/config/dashboard"
@@ -19,7 +20,7 @@ export default async function DashboardLayout({children}: DashboardLayoutProps) 
   }
 
   return (
-    <div className="flex flex-col min-h-screen space-y-6">
+    <div className="flex flex-col h-screen w-screen space-y-6 overflow-auto">
       <header className="sticky top-0 z-40 border-b bg-background">
         <div className="container flex h-16 items-center justify-between py-4">
           <MainNav items={dashboardConfig.mainNav}/>
@@ -35,7 +36,7 @@ export default async function DashboardLayout({children}: DashboardLayoutProps) 
           </div>
         </div>
       </header>
-      <div className="container flex-1 gap-4 flex flex-col md:flex-row">
+      <div className="container flex flex-col md:flex-row flex-1 gap-4 overflow-auto">
         {children}
       </div>
     </div>
