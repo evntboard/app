@@ -351,7 +351,7 @@ func (c *VmWrapped) vmStorageGet(key string) any {
 		res, err := c.storageTemporaryService.GetTemporaryStorage(c.condition.Trigger.OrganizationId, key)
 
 		if err != nil {
-			fmt.Println("Storage %s error: %s", key, err.Error())
+			log.Printf("[%s] %s : Warning trigger [%s] %s -> Storage %s error: %s\n", c.event.ID, c.event.Name, c.condition.TriggerID, c.condition.Trigger.Name, key, err.Error())
 			return nil
 		}
 
@@ -360,7 +360,7 @@ func (c *VmWrapped) vmStorageGet(key string) any {
 		res, err := c.storagePersistentService.GetPersistentStorage(c.condition.Trigger.OrganizationId, key)
 
 		if err != nil {
-			fmt.Println("Storage %s error: %s", key, err.Error())
+			log.Printf("[%s] %s : Warning trigger [%s] %s -> Storage %s error: %s\n", c.event.ID, c.event.Name, c.condition.TriggerID, c.condition.Trigger.Name, key, err.Error())
 			return nil
 		}
 
@@ -409,41 +409,20 @@ func (c *VmWrapped) vmModuleNameRequestCall(moduleName string, moduleMethod stri
 func (c *VmWrapped) vmModuleNameNotifyCall(moduleName string, moduleMethod string, params any) {
 	moduleId, err := c.getModuleIdByName(c.condition.Trigger.OrganizationId, moduleName)
 	if err != nil {
-		panic(c.vm.NewGoError(fmt.Errorf("there is no %s connected !", moduleName)))
+		log.Printf("[%s] %s : Warning trigger [%s] %s -> notify an unknown module %s\n", c.event.ID, c.event.Name, c.condition.TriggerID, c.condition.Trigger.Name, moduleName)
+		return
 	}
 
-	requestID := uuid.New().String()
-
 	requestChannel := utils.GChOrgaModule(c.condition.Trigger.OrganizationId, moduleId)
-	responseChannel := utils.GChOrgaModuleRequest(c.condition.Trigger.OrganizationId, moduleId, requestID)
 
 	message := model.ModuleRequest{
 		Notification: true,
-		Channel:      responseChannel,
+		Channel:      "",
 		Method:       moduleMethod,
 		Params:       params,
 	}
 
-	responseChan := make(chan *model.ModuleResponse)
-
-	wg := &sync.WaitGroup{}
-
-	wg.Add(1)
-	go c.subscribeToChannel(responseChannel, responseChan, wg)
-	wg.Wait()
-
 	c.publishMessage(requestChannel, message)
-
-	// Récupérer la réponse du canal
-	response := <-responseChan
-
-	if response == nil {
-		panic(c.vm.NewGoError(fmt.Errorf("Module %s method: %s don't reply with good format ...", moduleName, moduleMethod)))
-	}
-
-	if response.Error != "" {
-		panic(c.vm.NewGoError(fmt.Errorf("Module %s method: %s error: %s", moduleName, moduleMethod, response.Error)))
-	}
 }
 
 func (c *VmWrapped) vmModuleCodeRequestCall(moduleCode string, moduleMethod string, params any) []any {
@@ -506,52 +485,24 @@ func (c *VmWrapped) vmModuleCodeRequestCall(moduleCode string, moduleMethod stri
 
 func (c *VmWrapped) vmModuleCodeNotifyCall(moduleCode string, moduleMethod string, params []any) {
 	moduleIds, err := c.getModuleIdsByCode(c.condition.Trigger.OrganizationId, moduleCode)
+
 	if err != nil {
-		panic(c.vm.NewGoError(fmt.Errorf("there is no %s connected !", moduleCode)))
+		log.Printf("[%s] %s : Warning trigger [%s] %s -> notify an unknown module %s\n", c.event.ID, c.event.Name, c.condition.TriggerID, c.condition.Trigger.Name, moduleCode)
+		return
 	}
 
-	var wg sync.WaitGroup
-	responseChan := make(chan *model.ModuleResponse, len(moduleIds))
-
 	for _, moduleId := range moduleIds {
-		wg.Add(1)
 		go func(moduleId string) {
-			defer wg.Done()
-
-			requestID := uuid.New().String()
-
 			requestChannel := utils.GChOrgaModule(c.condition.Trigger.OrganizationId, moduleId)
-			responseChannel := utils.GChOrgaModuleRequest(c.condition.Trigger.OrganizationId, moduleId, requestID)
 
 			message := model.ModuleRequest{
 				Notification: true,
-				Channel:      responseChannel,
+				Channel:      "",
 				Method:       moduleMethod,
 				Params:       params,
 			}
 
-			wg2 := &sync.WaitGroup{}
-
-			wg2.Add(1)
-			go c.subscribeToChannel(responseChannel, responseChan, wg2)
-			wg2.Wait()
-
 			c.publishMessage(requestChannel, message)
 		}(moduleId)
-	}
-
-	wg.Wait()
-
-	close(responseChan)
-
-	var responses []model.ModuleResponse
-	for response := range responseChan {
-		responses = append(responses, *response)
-	}
-
-	for _, response := range responses {
-		if response.Error != "" {
-			panic(c.vm.NewGoError(fmt.Errorf("Module %s method: %s error: %s", moduleCode, moduleMethod, response.Error)))
-		}
 	}
 }
