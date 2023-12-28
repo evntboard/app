@@ -5,38 +5,42 @@ import {useRouter} from "next/navigation";
 
 import {TreeNodeType} from "@/types/tree-node"
 import {TreeView} from "@/components/treeView/TreeView";
-import {useLocalStorage} from "@/hooks/useLocalStorage";
 import {TreeNodeAction} from "@/components/treeView/TreeNode";
 import {TreeViewModals} from "@/components/treeView/modals/all";
+import {setToCookie} from "@/lib/cookie/set";
 
 type Props = {
   node: TreeNodeType,
   organizationId: string,
   scriptType?: 'trigger' | 'shared',
   scriptId?: string
+  defaultOpen: string[]
 }
 
-export const TreeViewGlobal = ({node, organizationId, scriptId, scriptType}: Props) => {
+export const TreeViewGlobal = ({node, organizationId, scriptId, scriptType, defaultOpen}: Props) => {
   const router = useRouter()
-  const [openFolders, setOpenFolders] = useLocalStorage<string[]>('open', [])
+  const [openFolders, setOpenFolders] = useState<string[]>(defaultOpen)
   const [openModal, setOpenModal] = useState<{ action: TreeNodeAction, entity: TreeNodeType } | undefined>()
 
-  const
-    handleOpenFolder = ({slug}: TreeNodeType) => {
+  const handleOpenFolder = ({slug}: TreeNodeType) => {
       if (openFolders) {
-        setOpenFolders([
+        const newOpenFolder = [
           ...openFolders,
           slug
-        ])
+        ]
+        setToCookie("evntboard:open", newOpenFolder)
+        setOpenFolders(newOpenFolder)
       } else {
-        setOpenFolders([
-          slug
-        ])
+        const newOpenFolder = [slug]
+        setToCookie("evntboard:open", newOpenFolder)
+        setOpenFolders(newOpenFolder)
       }
     }
 
   const handleCloseFolder = ({slug}: TreeNodeType) => {
-    setOpenFolders(openFolders.filter((itm) => itm !== slug))
+    const newOpenFolder = openFolders.filter((itm) => itm !== slug)
+    setToCookie("evntboard:open", newOpenFolder)
+    setOpenFolders(newOpenFolder)
   }
 
   const handleItemClick = (entity: TreeNodeType) => {

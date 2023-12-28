@@ -16,12 +16,13 @@ type Props = {
   organizationId: string,
   scriptType?: 'trigger' | 'shared',
   scriptId?: string,
-  defaultLayout: number[]
+  defaultLayout: number[],
+  defaultOpen: string[],
 }
 
 export const Panel = (props: Props) => {
   const onLayout = (sizes: number[]) => {
-    cookie.set("react-resizable-panels:layout", JSON.stringify(sizes), {
+    cookie.set("evntboard:layout", JSON.stringify(sizes), {
       domain: `.${window.location.hostname}`,
       secure: true,
       sameSite: "None",
@@ -37,20 +38,23 @@ export const Panel = (props: Props) => {
       <ResizablePanel
         minSize={5}
         defaultSize={props.defaultLayout[0] || 33}
-        className="m-2 w-full h-full flex flex-col overflow-auto"
+        className="p-2 w-full h-full"
       >
-        <TreeViewGlobal
-          node={props.tree}
-          organizationId={props.organizationId}
-          scriptType={props.scriptType}
-          scriptId={props.scriptId}
-        />
+        <div className="w-full h-full flex flex-col overflow-auto">
+          <TreeViewGlobal
+            defaultOpen={props.defaultOpen}
+            node={props.tree}
+            organizationId={props.organizationId}
+            scriptType={props.scriptType}
+            scriptId={props.scriptId}
+          />
+        </div>
       </ResizablePanel>
       <ResizableHandle withHandle/>
       <ResizablePanel
         defaultSize={props.defaultLayout[1] || 67}
         minSize={25}
-        className="m-2 w-full h-full flex flex-col"
+        className="p-2 w-full h-full flex flex-col"
       >
         {!props.scriptType && (
           <div>Nothing selected</div>

@@ -1,5 +1,4 @@
 import {redirect} from "next/navigation";
-import {cookies} from "next/headers";
 
 import {authOptions} from "@/lib/auth";
 import {generateTree} from "@/lib/tree";
@@ -7,6 +6,7 @@ import {getCurrentUser} from "@/lib/session";
 import {getScriptsForUserIdAndOrganizationId} from "@/lib/db/scripts";
 import {getSharedByIdAndOrganization} from "@/lib/db/shared";
 import {getTriggerByIdAndOrganization} from "@/lib/db/trigger";
+import {getFromCookie} from "@/lib/cookie/get";
 import {Panel} from "./panel";
 
 type Props = {
@@ -17,16 +17,6 @@ type Props = {
   searchParams: Record<string, string> | null | undefined
 }
 
-function getDefaultLayout() {
-  const layout = cookies().get(
-    encodeURIComponent("react-resizable-panels:layout"),
-  );
-  if (layout) {
-    return JSON.parse(layout.value);
-  }
-  return [33, 67];
-}
-
 
 export default async function OrganizationScriptPage(props: Props) {
   const user = await getCurrentUser()
@@ -35,7 +25,9 @@ export default async function OrganizationScriptPage(props: Props) {
     redirect(authOptions?.pages?.signIn || "/login")
   }
 
-  const defaultLayout = getDefaultLayout();
+  const defaultLayout = getFromCookie("evntboard:layout", [33, 67]);
+
+  const defaultOpen = getFromCookie("evntboard:open", []);
 
   const organizationId = props.params.organizationId
 
@@ -61,6 +53,7 @@ export default async function OrganizationScriptPage(props: Props) {
 
   return (
     <Panel
+      defaultOpen={defaultOpen}
       defaultLayout={defaultLayout}
       tree={tree}
       entity={entity}
