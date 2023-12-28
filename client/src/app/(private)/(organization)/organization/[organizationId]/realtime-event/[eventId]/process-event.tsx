@@ -1,17 +1,18 @@
 "use client"
 
+import * as React from "react";
+import {ReactElement, useEffect, useState} from "react";
 import {differenceInMilliseconds, format, parseISO} from "date-fns";
 import {ColumnDef} from "@tanstack/react-table";
 
+import {jsonParse} from "@/lib/utils";
 import {TriggerWithProcessData} from "@/types/trigger-process";
 import {Button} from "@/components/ui/button";
 import {Icons} from "@/components/icons";
 import {Tooltip, TooltipContent, TooltipTrigger} from "@/components/ui/tooltip";
 import {DataTable} from "@/components/data-table";
-import * as React from "react";
-import {useEffect, useState} from "react";
-import { Badge } from "@/components/ui/badge";
-import {jsonParse} from "@/lib/utils";
+import {Badge} from "@/components/ui/badge";
+import {Editor} from "@/components/editor";
 
 const columnsProcess: ColumnDef<TriggerWithProcessData>[] = [
   {
@@ -25,7 +26,7 @@ const columnsProcess: ColumnDef<TriggerWithProcessData>[] = [
           onClick={row.getToggleExpandedHandler()}
           disabled={!row.getCanExpand()}
         >
-          {row.getIsExpanded() ? <Icons.down className="mx-auto h-4 w-4" /> : <Icons.right className="mx-auto h-4 w-4" />}
+          {row.getIsExpanded() ? <Icons.down className="mx-auto h-4 w-4"/> : <Icons.right className="mx-auto h-4 w-4"/>}
         </Button>
       )
     },
@@ -87,22 +88,33 @@ const columnsProcess: ColumnDef<TriggerWithProcessData>[] = [
 ]
 
 const subComponent = ({row: {original}}: any) => {
+  let component: null | ReactElement
+  try {
+    let value = JSON.stringify(original.logs.map((data: string) => JSON.parse(data)), null, 2)
+    component = (
+      <Editor
+        options={{
+          readOnly: true
+        }}
+        height={400}
+        language="json"
+        value={value}
+      />
+    )
+  } catch (e) {
+    component = (
+      <div className="w-[400px] h-[400px] overflow-auto">
+        {original.logs.join('\n')}
+      </div>
+    )
+  }
+
   return (
     <>
       <h1 className="font-heading text-xl">
         Logs
       </h1>
-      <div className="w-[500px] overflow-auto">
-        <ul className="flex flex-col">
-          {original.logs.map((log: string, i: number) => (
-            <li key={i} className="">
-             <pre>
-                {log}
-             </pre>
-            </li>
-          ))}
-        </ul>
-      </div>
+      {component}
     </>
   )
 }
@@ -121,7 +133,7 @@ export const ProcessEvent = (props: Props) => {
       withCredentials: true,
     });
 
-    evtSource.addEventListener('message', ({ data: raw }) => {
+    evtSource.addEventListener('message', ({data: raw}) => {
       try {
         const data = jsonParse(raw)
         setEvents(data)
