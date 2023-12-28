@@ -152,18 +152,6 @@ export function TriggerForm({className, entity, organizationId, ...props}: Props
         onSubmit={form.handleSubmit(onSubmit)}
         {...props}
       >
-        <div>
-          <button
-            type="submit"
-            className={cn(buttonVariants())}
-            disabled={isSaving}
-          >
-            {isSaving && (
-              <Icons.spinner className="mr-2 h-4 w-4 animate-spin"/>
-            )}
-            <span>Save</span>
-          </button>
-        </div>
         <div className="flex flex-col gap-2 md:flex-row">
           <FormField
             control={form.control}
@@ -361,6 +349,18 @@ export function TriggerForm({className, entity, organizationId, ...props}: Props
               )
             })
           }
+        </div>
+        <div className="flex flex-col items-end">
+          <button
+            type="submit"
+            className={cn(buttonVariants())}
+            disabled={isSaving}
+          >
+            {isSaving && (
+              <Icons.spinner className="mr-2 h-4 w-4 animate-spin"/>
+            )}
+            <span>Save</span>
+          </button>
         </div>
       </form>
     </Form>

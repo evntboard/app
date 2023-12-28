@@ -1,18 +1,13 @@
-import React from "react";
 import {redirect} from "next/navigation";
-import {Shared, Trigger} from "@prisma/client";
+import {cookies} from "next/headers";
 
 import {authOptions} from "@/lib/auth";
-import {generateOptions, generateTree} from "@/lib/tree";
+import {generateTree} from "@/lib/tree";
 import {getCurrentUser} from "@/lib/session";
 import {getScriptsForUserIdAndOrganizationId} from "@/lib/db/scripts";
 import {getSharedByIdAndOrganization} from "@/lib/db/shared";
 import {getTriggerByIdAndOrganization} from "@/lib/db/trigger";
-
-import {SharedForm} from "./shared-form";
-import {TriggerForm} from "./trigger-form";
-import {TreeViewGlobal} from "./tree-view-global";
-import {TreeViewMobile} from "./tree-view-mobile";
+import {Panel} from "./panel";
 
 type Props = {
   params: {
@@ -22,6 +17,17 @@ type Props = {
   searchParams: Record<string, string> | null | undefined
 }
 
+function getDefaultLayout() {
+  const layout = cookies().get(
+    encodeURIComponent("react-resizable-panels:layout"),
+  );
+  if (layout) {
+    return JSON.parse(layout.value);
+  }
+  return [33, 67];
+}
+
+
 export default async function OrganizationScriptPage(props: Props) {
   const user = await getCurrentUser()
 
@@ -29,17 +35,18 @@ export default async function OrganizationScriptPage(props: Props) {
     redirect(authOptions?.pages?.signIn || "/login")
   }
 
+  const defaultLayout = getDefaultLayout();
+
   const organizationId = props.params.organizationId
 
   const [triggers, shareds] = await getScriptsForUserIdAndOrganizationId(user.id, organizationId)
 
   const tree = generateTree('/', triggers, shareds)
-  const items = generateOptions('/', triggers, shareds)
 
   const scriptType = props.params.rest?.[0]
   const scriptId = props.params.rest?.[1]
 
-  let entity = null
+  let entity: unknown = null
 
   if (scriptType && scriptId) {
     switch (scriptType) {
@@ -53,31 +60,13 @@ export default async function OrganizationScriptPage(props: Props) {
   }
 
   return (
-    <>
-      <aside className="hidden flex-col md:flex w-[200px] overflow-auto">
-        <TreeViewGlobal
-          node={tree}
-          organizationId={organizationId}
-          scriptType={scriptType}
-          scriptId={scriptId}
-        />
-      </aside>
-      <aside className="flex flex-col md:hidden">
-        <TreeViewMobile
-          options={items}
-          organizationId={organizationId}
-          scriptType={scriptType}
-          scriptId={scriptId}
-        />
-      </aside>
-      <main className="flex flex-1 flex-col">
-        {!scriptType && (
-          <div>Nothing selected</div>
-        )}
-        {scriptType === 'shared' && <SharedForm entity={entity as unknown as Shared} organizationId={organizationId}/>}
-        {scriptType === 'trigger' &&
-          <TriggerForm entity={entity as unknown as Trigger} organizationId={organizationId}/>}
-      </main>
-    </>
+    <Panel
+      defaultLayout={defaultLayout}
+      tree={tree}
+      entity={entity}
+      organizationId={organizationId}
+      scriptId={scriptId}
+      scriptType={scriptType}
+    />
   )
 }
