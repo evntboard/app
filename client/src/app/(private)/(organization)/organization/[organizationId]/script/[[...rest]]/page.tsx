@@ -8,6 +8,8 @@ import {getSharedByIdAndOrganization} from "@/lib/db/shared";
 import {getTriggerByIdAndOrganization} from "@/lib/db/trigger";
 import {getFromCookie} from "@/lib/cookie/get";
 import {Panel} from "./panel";
+import {userHasWriteAccessToOrganization} from "@/lib/db/user";
+import {NextResponse} from "next/server";
 
 type Props = {
   params: {
@@ -23,6 +25,12 @@ export default async function OrganizationScriptPage(props: Props) {
 
   if (!user) {
     redirect(authOptions?.pages?.signIn || "/login")
+  }
+
+  const hasWriteAccess = await userHasWriteAccessToOrganization(props.params.organizationId, user.id)
+
+  if (!hasWriteAccess) {
+    return NextResponse.json({error: 'Unauthorized'}, {status: 403})
   }
 
   const defaultLayout = getFromCookie("evntboard:layout", [33, 67]);
@@ -53,6 +61,7 @@ export default async function OrganizationScriptPage(props: Props) {
 
   return (
     <Panel
+      hasWriteAccess={hasWriteAccess}
       defaultOpen={defaultOpen}
       defaultLayout={defaultLayout}
       tree={tree}
