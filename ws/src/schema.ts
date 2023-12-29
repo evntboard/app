@@ -14,10 +14,10 @@ export const eventNewSchema = z.object({
 
 
 export const storageGetSchema = z.object({
-  key: z.string()
+  key: z.string().min(3)
 })
 
 export const storageSetSchema = z.object({
-  key: z.string(),
+  key: z.string().min(3),
   value: z.any(),
 })

@@ -11,7 +11,7 @@ import {gChOrgaStorage, gKeyOrgaStorage} from "@/lib/helper";
 const routeContextSchema = z.object({
   params: z.object({
     organizationId: z.string(),
-    storageKey: z.string(),
+    storageKey: z.string().min(3),
   }),
 })
 

@@ -1,7 +1,7 @@
 import * as z from "zod"
 
 export const storageSchema = z.object({
-  key: z.string(),
+  key: z.string().min(3),
   value: z.string().refine((value) => {
     try {
       JSON.parse(value);
