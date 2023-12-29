@@ -303,6 +303,10 @@ func (c *VmWrapped) getModuleIdsByCode(organizationId string, code string) ([]st
 }
 
 func (c *VmWrapped) vmStorageSet(key string, value any) any {
+	if len(strings.Replace(key, "tmp:", "", 1)) < 3 {
+		panic(c.vm.NewGoError(fmt.Errorf("storage set key cannot be less than 3 chars")))
+	}
+
 	ctx := context.Background()
 
 	if strings.HasPrefix(key, "tmp:") {
@@ -347,6 +351,10 @@ func (c *VmWrapped) vmStorageSet(key string, value any) any {
 }
 
 func (c *VmWrapped) vmStorageGet(key string) any {
+	if len(strings.Replace(key, "tmp:", "", 1)) < 3 {
+		panic(c.vm.NewGoError(fmt.Errorf("storage get key cannot be less than 3 chars")))
+	}
+
 	if strings.HasPrefix(key, "tmp:") {
 		res, err := c.storageTemporaryService.GetTemporaryStorage(c.condition.Trigger.OrganizationId, key)
 
