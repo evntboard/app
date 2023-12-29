@@ -97,7 +97,7 @@ export const ImportModal = ({entity, action, onClose, hasWriteAccess, organizati
       })
 
       toast({
-        description: "Event sent",
+        description: "Import sent",
       })
 
       router.refresh()
@@ -107,14 +107,14 @@ export const ImportModal = ({entity, action, onClose, hasWriteAccess, organizati
           case 422:
             toast({
               title: "Provided data are not right",
-              description: "Your event was not sent.",
+              description: "Your import was not processed.",
               variant: "destructive",
             })
             break;
           case 402:
             toast({
               title: "Something went wrong.",
-              description: "Your event was not sent.",
+              description: "Your import was not processed.",
               variant: "destructive",
             })
             break;
@@ -122,7 +122,7 @@ export const ImportModal = ({entity, action, onClose, hasWriteAccess, organizati
       }
       toast({
         title: "Something went wrong.",
-        description: "Your event was not sent. Please try again.",
+        description: "Your import was not processed. Please try again.",
         variant: "destructive",
       })
     } finally {
