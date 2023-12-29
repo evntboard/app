@@ -18,6 +18,7 @@ type Props = {
   scriptId?: string,
   defaultLayout: number[],
   defaultOpen: string[],
+  hasWriteAccess: boolean,
 }
 
 export const Panel = (props: Props) => {
@@ -42,6 +43,7 @@ export const Panel = (props: Props) => {
       >
         <div className="w-full h-full flex flex-col overflow-auto">
           <TreeViewGlobal
+            hasWriteAccess={props.hasWriteAccess}
             defaultOpen={props.defaultOpen}
             node={props.tree}
             organizationId={props.organizationId}

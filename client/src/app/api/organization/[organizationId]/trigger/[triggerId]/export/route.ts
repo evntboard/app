@@ -49,6 +49,10 @@ export async function GET(req: NextRequest, context: z.infer<typeof routeContext
       },
     })
 
+    if (trigger == null) {
+      return NextResponse.json({error: 'No trigger for this id'}, {status: 500})
+    }
+
     return NextResponse.json({triggers: [trigger], shareds: []}, {status: 200})
   } catch (error) {
     return NextResponse.json({error: 'Internal Server Error'}, {status: 500})

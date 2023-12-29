@@ -7,6 +7,8 @@ import {getScriptsForUserIdAndOrganizationId} from "@/lib/db/scripts";
 import {getSharedByIdAndOrganization} from "@/lib/db/shared";
 import {getTriggerByIdAndOrganization} from "@/lib/db/trigger";
 import {getFromCookie} from "@/lib/cookie/get";
+import {userHasWriteAccessToOrganization} from "@/lib/db/user";
+
 import {Panel} from "./panel";
 
 type Props = {
@@ -24,6 +26,8 @@ export default async function OrganizationScriptPage(props: Props) {
   if (!user) {
     redirect(authOptions?.pages?.signIn || "/login")
   }
+
+  const hasWriteAccess = await userHasWriteAccessToOrganization(props.params.organizationId, user.id)
 
   const defaultLayout = getFromCookie("evntboard:layout", [33, 67]);
 
@@ -53,6 +57,7 @@ export default async function OrganizationScriptPage(props: Props) {
 
   return (
     <Panel
+      hasWriteAccess={hasWriteAccess}
       defaultOpen={defaultOpen}
       defaultLayout={defaultLayout}
       tree={tree}

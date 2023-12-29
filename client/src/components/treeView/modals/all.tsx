@@ -11,6 +11,7 @@ import {ImportModal} from "@/components/treeView/modals/import";
 import {MoveModal} from "@/components/treeView/modals/move";
 
 type Props = {
+  hasWriteAccess: boolean,
   organizationId: string,
   scriptType?: string,
   scriptId?: string,
@@ -19,7 +20,7 @@ type Props = {
   onClose: () => void
 }
 
-export const TreeViewModals = ({organizationId, scriptId, scriptType, entity, action, onClose}: Props) => {
+export const TreeViewModals = ({organizationId, scriptId, scriptType, entity, action, onClose, hasWriteAccess}: Props) => {
 
   if (!entity || !action) {
     return null
@@ -60,6 +61,7 @@ export const TreeViewModals = ({organizationId, scriptId, scriptType, entity, ac
         action={action}
       />
       <ImportModal
+        hasWriteAccess={hasWriteAccess}
         organizationId={organizationId}
         entity={entity}
         onClose={onClose}

@@ -15,9 +15,10 @@ type Props = {
   scriptType?: 'trigger' | 'shared',
   scriptId?: string
   defaultOpen: string[]
+  hasWriteAccess: boolean
 }
 
-export const TreeViewGlobal = ({node, organizationId, scriptId, scriptType, defaultOpen}: Props) => {
+export const TreeViewGlobal = ({node, organizationId, scriptId, scriptType, defaultOpen, hasWriteAccess}: Props) => {
   const router = useRouter()
   const [openFolders, setOpenFolders] = useState<string[]>(defaultOpen)
   const [openModal, setOpenModal] = useState<{ action: TreeNodeAction, entity: TreeNodeType } | undefined>()
@@ -71,6 +72,7 @@ export const TreeViewGlobal = ({node, organizationId, scriptId, scriptType, defa
   return (
     <>
       <TreeViewModals
+        hasWriteAccess={hasWriteAccess}
         organizationId={organizationId}
         onClose={handleModalClose}
         action={openModal?.action}

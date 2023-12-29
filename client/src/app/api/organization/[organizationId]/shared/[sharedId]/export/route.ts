@@ -29,7 +29,7 @@ export async function GET(req: NextRequest, context: z.infer<typeof routeContext
       return NextResponse.json({error: 'Unauthorized'}, {status: 403})
     }
 
-    const shared = await db.shared.findMany({
+    const shared = await db.shared.findFirst({
       select: {
         name:true,
         code: true,
@@ -39,6 +39,10 @@ export async function GET(req: NextRequest, context: z.infer<typeof routeContext
         id: params.sharedId
       },
     })
+
+    if (shared == null) {
+      return NextResponse.json({error: 'No trigger for this id'}, {status: 500})
+    }
 
     return NextResponse.json({ triggers: [], shareds: [ shared ] }, {status: 200})
   } catch (error) {
