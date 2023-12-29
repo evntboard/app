@@ -35,7 +35,7 @@ export async function POST(req: NextRequest, context: z.infer<typeof routeContex
 
     const promsT = body.triggers.map((trigger) => db.trigger.create({
       data: {
-        name: trigger.name,
+        name: `${body.slug}${trigger.name.substring(1)}` ,
         enable: false,
         channel: trigger.channel,
         code: trigger.code,
@@ -58,7 +58,7 @@ export async function POST(req: NextRequest, context: z.infer<typeof routeContex
 
     const promsS = body.shareds.map((shared) => db.shared.create({
       data: {
-        name: shared.name,
+        name: `${body.slug}${shared.name.substring(1)}` ,
         code: shared.code,
         enable: false,
         organization: {

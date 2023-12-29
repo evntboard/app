@@ -93,7 +93,10 @@ export const ImportModal = ({entity, action, onClose, hasWriteAccess, organizati
 
     try {
       await ky.post(`/api/organization/${organizationId}/tree/import`, {
-        json: mergedData
+        json: {
+          slug: data.slug,
+          ...mergedData
+        }
       })
 
       toast({

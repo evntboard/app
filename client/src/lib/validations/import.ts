@@ -1,7 +1,7 @@
 import * as z from "zod";
 
 export const importSchema = z.object({
-  slug: z.string(),
+  slug: z.string().refine((value) => value === "/" || /^\/.*\/$/.test(value), 'Slug should be a valid path'),
   files: z.any().optional(),
 })
 
@@ -26,6 +26,7 @@ export const importSharedSchema = z.object({
 
 
 export const importPostSchema = z.object({
+  slug: z.string().refine((value) => value === "/" || /^\/.*\/$/.test(value), 'Slug should be a valid path'),
   triggers: z.array(importTriggerSchema),
   shareds: z.array(importSharedSchema),
 })
