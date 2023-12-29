@@ -33,7 +33,7 @@ export const ImportModal = ({entity, action, onClose, hasWriteAccess, organizati
   const form = useForm<FormData>({
     resolver: zodResolver(importSchema),
     defaultValues: {
-      slug: entity.slug,
+      slug: `${entity.slug.substring(0, entity.slug.lastIndexOf('/'))}/`,
       files: undefined
     },
   })
@@ -100,10 +100,11 @@ export const ImportModal = ({entity, action, onClose, hasWriteAccess, organizati
       })
 
       toast({
-        description: "Import sent",
+        description: "Import executed",
       })
 
       router.refresh()
+      onClose()
     } catch (e) {
       if (e instanceof HTTPError) {
         switch (e.response.status) {
