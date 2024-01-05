@@ -9,7 +9,7 @@ export const sessionRegisterSchema = z.object({
 
 export const eventNewSchema = z.object({
   name: z.string().min(3),
-  payload: z.any()
+  payload: z.any().optional()
 })
 
 

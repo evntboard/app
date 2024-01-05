@@ -194,7 +194,7 @@ model CustomEvent {
   id             String       @id @default(cuid())
   name           String
   description    String
-  payload        Json
+  payload        Json?
   organization   Organization @relation(fields: [organizationId], references: [id])
   organizationId String       @map(name: "organization_id")
 
@@ -210,7 +210,7 @@ enum EventStatus {
 model Event {
   id             String       @id @default(cuid())
   name           String
-  payload        Json
+  payload        Json?
   emitterCode    String       @map(name: "emitter_code")
   emitterName    String       @map(name: "emitter_name")
   emittedAt      DateTime     @map(name: "emitted_at")
