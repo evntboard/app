@@ -1,7 +1,7 @@
-import {db} from "@/lib/db";
+import {nc, prisma} from "@/lib/singleton";;
 
 export async function getTriggerByIdAndOrganization(organizationId: string, userId: string, scriptId: string) {
-  return db.trigger.findFirst({
+  return prisma.trigger.findFirst({
     select: {
       id: true,
       name: true,

@@ -1,14 +1,13 @@
 package service
 
 import (
+	"context"
 	"fmt"
-	"gorm.io/driver/postgres"
-	"gorm.io/gorm"
-	"log"
+	"github.com/jackc/pgx/v5/pgxpool"
 )
 
 type DbService struct {
-	Db            *gorm.DB
+	Db            *pgxpool.Pool
 	configService *ConfigService
 }
 
@@ -21,21 +20,17 @@ func NewDbService(configService *ConfigService) *DbService {
 }
 
 func (c *DbService) InitDB() {
-	log.Printf("Load database %s from %s:%d\n", c.configService.GlobalConfig.Database.DB, c.configService.GlobalConfig.Database.Host, c.configService.GlobalConfig.Database.Port)
-
-	dbUrl := fmt.Sprintf(
-		"postgresql://%s:%s@%s:%d/%s",
-		c.configService.GlobalConfig.Database.Username,
-		c.configService.GlobalConfig.Database.Password,
-		c.configService.GlobalConfig.Database.Host,
-		c.configService.GlobalConfig.Database.Port,
-		c.configService.GlobalConfig.Database.DB,
-	)
-
-	newDB, err := gorm.Open(postgres.Open(dbUrl), &gorm.Config{})
+	ctx := context.Background()
+	config, err := pgxpool.ParseConfig(c.configService.GlobalConfig.DatabaseUrl)
 	if err != nil {
-		panic(fmt.Sprintln("Error when opening the database:", err.Error()))
+		panic(fmt.Sprintf("Error parsing connection string: %v", err))
 	}
 
-	c.Db = newDB
+	pool, err := pgxpool.NewWithConfig(ctx, config)
+
+	if err != nil {
+		panic(fmt.Sprintf("Error connection database : %v", err))
+	}
+
+	c.Db = pool
 }

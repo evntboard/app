@@ -1,7 +1,7 @@
-import {db} from "@/lib/db";
+import {nc, prisma} from "@/lib/singleton";;
 
 export async function getModuleByUserIdAndOrganizationId(organizationId: string, userId: string, moduleId: string) {
-  return db.module.findFirst({
+  return prisma.module.findFirst({
     select: {
       id: true,
       organizationId: true,
@@ -37,7 +37,7 @@ export async function getModuleByUserIdAndOrganizationId(organizationId: string,
 }
 
 export async function getModulesByUserIdAndOrganizationId(organizationId: string, userId: string) {
-  return db.module.findMany({
+  return prisma.module.findMany({
     select: {
       id: true,
       organizationId: true,

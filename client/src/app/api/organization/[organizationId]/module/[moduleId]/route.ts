@@ -1,6 +1,6 @@
 import * as z from "zod"
 
-import {db} from "@/lib/db"
+import {prisma} from "@/lib/singleton";
 import {moduleSchema} from "@/lib/validations/module"
 import {getServerSession} from "next-auth/next";
 import {authOptions} from "@/lib/auth";
@@ -34,7 +34,7 @@ export async function DELETE(
       return NextResponse.json({error: 'Unauthorized'}, {status: 403})
     }
 
-    await db.module.deleteMany({
+    await prisma.module.deleteMany({
       where: {
         organizationId: params.organizationId,
         id: params.moduleId,
@@ -76,7 +76,7 @@ export async function PATCH(
     const body = moduleSchema.parse(json)
 
 
-    await db.moduleParam.deleteMany({
+    await prisma.moduleParam.deleteMany({
       where: {
         moduleId: params.moduleId,
         NOT: {
@@ -88,7 +88,7 @@ export async function PATCH(
     });
 
 
-    await db.module.update({
+    await prisma.module.update({
       where: {
         id: params.moduleId,
         organizationId: params.organizationId
@@ -148,7 +148,7 @@ export async function GET(req: NextRequest, context: z.infer<typeof routeContext
       return NextResponse.json({error: 'Unauthorized'}, {status: 403})
     }
 
-    const entity = await db.module.findFirstOrThrow({
+    const entity = await prisma.module.findFirstOrThrow({
       where: {
         organizationId: params.organizationId,
         id: params.moduleId

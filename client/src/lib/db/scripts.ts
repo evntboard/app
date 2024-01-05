@@ -1,8 +1,8 @@
-import {db} from "@/lib/db";
+import {nc, prisma} from "@/lib/singleton";;
 
 export async function getScriptsForUserIdAndOrganizationId(userId: string, organizationId: string) {
   return await Promise.all([
-    db.trigger.findMany({
+    prisma.trigger.findMany({
       where: {
         organizationId,
         organization: {
@@ -21,7 +21,7 @@ export async function getScriptsForUserIdAndOrganizationId(userId: string, organ
         }
       },
     }),
-    db.shared.findMany({
+    prisma.shared.findMany({
         where: {
           organizationId,
           organization: {

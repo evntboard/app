@@ -1,10 +1,10 @@
 import * as z from "zod"
 
-import {db} from "@/lib/db";
+import {nc, prisma} from "@/lib/singleton";;
 import {organizationSchema} from "@/lib/validations/organization";
 
 export function getOrganizationsByUserId(userId: string) {
-  return db.organization.findMany({
+  return prisma.organization.findMany({
     select: {
       id: true,
       name: true,
@@ -49,7 +49,7 @@ export function getOrganizationsByUserId(userId: string) {
 }
 
 export function getOrganizationByUserId(userId: string, organizationId: string) {
-  return db.organization.findFirst({
+  return prisma.organization.findFirst({
     select: {
       id: true,
       name: true,
@@ -95,7 +95,7 @@ export function getOrganizationByUserId(userId: string, organizationId: string) 
 }
 
 export function createOrganizationForUserId(userId: string, body: z.infer<typeof organizationSchema>) {
-  return db.organization.create({
+  return prisma.organization.create({
     data: {
       name: body.name,
       creatorId: userId,

@@ -1,6 +1,6 @@
 import * as z from "zod"
 
-import {db} from "@/lib/db"
+import {nc, prisma} from "@/lib/singleton";
 import {getServerSession} from "next-auth/next";
 import {authOptions} from "@/lib/auth";
 import {userHasWriteAccessToOrganization} from "@/lib/db/user";
@@ -30,7 +30,7 @@ export async function GET(req: NextRequest, context: z.infer<typeof routeContext
       return NextResponse.json({error: 'Unauthorized'}, {status: 403})
     }
 
-    const entity = await db.trigger.findFirstOrThrow({
+    const entity = await prisma.trigger.findFirstOrThrow({
       include: {
         conditions: true
       },
@@ -42,7 +42,7 @@ export async function GET(req: NextRequest, context: z.infer<typeof routeContext
 
     const targetPath = req.nextUrl.searchParams.get('target-path') ?? entity.name + '-dup'
 
-    await db.trigger.create({
+    await prisma.trigger.create({
       data: {
         name: targetPath,
         code: entity.code,

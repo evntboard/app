@@ -2,7 +2,7 @@ import * as z from "zod"
 import {getServerSession} from "next-auth/next";
 import {NextRequest, NextResponse} from "next/server";
 
-import {db} from "@/lib/db"
+import {nc, prisma} from "@/lib/singleton";
 import {authOptions} from "@/lib/auth";
 import {userHasWriteAccessToOrganization} from "@/lib/db/user";
 
@@ -32,8 +32,8 @@ export async function GET(req: NextRequest, context: z.infer<typeof routeContext
     const targetPath = req.nextUrl.searchParams.get('target-path') ?? '/new/'
 
     await Promise.all([
-      db.$executeRaw`UPDATE "Shared" SET name = REGEXP_REPLACE(name, ${path}, ${targetPath}, 1) WHERE name LIKE ${path + "%"}`,
-      db.$executeRaw`UPDATE "Trigger" SET name = REGEXP_REPLACE(name, ${path}, ${targetPath}, 1) WHERE name LIKE ${path + "%"}`
+      prisma.$executeRaw`UPDATE "Shared" SET name = REGEXP_REPLACE(name, ${path}, ${targetPath}, 1) WHERE name LIKE ${path + "%"}`,
+      prisma.$executeRaw`UPDATE "Trigger" SET name = REGEXP_REPLACE(name, ${path}, ${targetPath}, 1) WHERE name LIKE ${path + "%"}`
     ])
 
     return NextResponse.json({}, {status: 200})

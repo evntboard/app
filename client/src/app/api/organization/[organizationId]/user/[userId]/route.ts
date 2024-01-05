@@ -1,6 +1,6 @@
 import * as z from "zod"
 
-import {db} from "@/lib/db"
+import {nc, prisma} from "@/lib/singleton";
 import {getServerSession} from "next-auth/next";
 import {authOptions} from "@/lib/auth";
 import {userHasWriteAccessToOrganization} from "@/lib/db/user";
@@ -32,7 +32,7 @@ export async function DELETE(
       return NextResponse.json({error: 'Unauthorized'}, {status: 403})
     }
 
-    await db.usersOrganizations.delete({
+    await prisma.usersOrganizations.delete({
       where: {
         userId_organizationId: {
           organizationId: params.organizationId,

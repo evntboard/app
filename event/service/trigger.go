@@ -1,8 +1,9 @@
 package service
 
 import (
-	"errors"
+	"context"
 	"github.com/evntboard/app/event/model"
+	"log"
 )
 
 type TriggerService struct {
@@ -13,34 +14,55 @@ func NewTriggerService(dbService *DbService) *TriggerService {
 	return &TriggerService{dbService}
 }
 
-func (c *TriggerService) EventForTriggerCondition(event string, organizationId string) []*model.TriggerCondition {
-	var conditions []*model.TriggerCondition
-	c.dbService.Db.Preload("Trigger").Joins("INNER JOIN trigger ON condition.trigger_id = trigger.id").
-		Where("trigger.organization_id = ? AND condition.name = ? AND condition.enable = true AND trigger.enable = true", organizationId, event).
-		Find(&conditions)
-	return conditions
-}
+func (c *TriggerService) EventForTriggerCondition(organizationID string, eventName string) ([]*model.TriggerConditionResult, error) {
+	ctx := context.Background()
 
-func (c *TriggerService) GetTriggerByID(id string) (*model.Trigger, error) {
-	var trigger *model.Trigger
-	result := c.dbService.Db.Preload("Conditions").Where("id = ?", id).Limit(1).Find(&trigger)
-	if result.Error != nil {
-		return nil, result.Error
-	}
-	if result.RowsAffected == 0 {
-		return nil, errors.New("No result found")
-	}
-	return trigger, nil
-}
+	query := `
+		SELECT trigger.organization_id as organization_id,
+		       trigger.id              as trigger_id,
+		       trigger.name            as trigger_name,
+		       trigger.code            as trigger_code,
+		       trigger.channel         as trigger_channel,
+		       condition.id            as condition_id,
+		       condition.name          as condition_name,
+		       condition.code          as condition_code,
+		       condition.type          as condition_type,
+		       condition.timeout       as condition_timeout
+		FROM condition
+		         INNER JOIN trigger ON condition.trigger_id = trigger.id
+		WHERE trigger.organization_id = $1
+		  AND condition.name = $2
+		  AND condition.enable = true
+		  AND trigger.enable = true
+	`
 
-func (c *TriggerService) GetTriggersByIDs(ids []string) ([]*model.Trigger, error) {
-	var triggers []*model.Trigger
-	result := c.dbService.Db.Preload("Conditions").Where("id IN (?)", ids).Find(&triggers)
-	if result.Error != nil {
-		return nil, result.Error
+	rows, err := c.dbService.Db.Query(ctx, query, organizationID, eventName)
+	if err != nil {
+		return nil, err
 	}
-	if result.RowsAffected == 0 {
-		return nil, errors.New("No result found")
+	defer rows.Close()
+
+	var results []*model.TriggerConditionResult
+
+	for rows.Next() {
+		var result = &model.TriggerConditionResult{}
+		err := rows.Scan(
+			&result.OrganizationID,
+			&result.TriggerID,
+			&result.TriggerName,
+			&result.TriggerCode,
+			&result.TriggerChannel,
+			&result.ConditionID,
+			&result.ConditionName,
+			&result.ConditionCode,
+			&result.ConditionType,
+			&result.ConditionTimeout,
+		)
+		if err != nil {
+			log.Println(err)
+		}
+		results = append(results, result)
 	}
-	return triggers, nil
+
+	return results, rows.Err()
 }

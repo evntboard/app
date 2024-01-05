@@ -1,5 +1,10 @@
 version: '3.9'
 services:
+  nats:
+    image: nats:alpine
+    ports:
+      - "4222:4222"
+    restart: always
   db:
     image: postgres:alpine
     environment:
@@ -13,11 +18,4 @@ services:
       interval: 3s
       timeout: 5s
       retries: 5
-    restart: always
-
-  redis:
-    image: "redis/redis-stack:latest"
-    ports:
-      - "6379:6379"
-      - "8001:8001"
     restart: always

@@ -3,7 +3,7 @@ import {NextRequest, NextResponse} from "next/server";
 import * as z from "zod"
 
 import {authOptions} from "@/lib/auth"
-import {db} from "@/lib/db"
+import {nc, prisma} from "@/lib/singleton";
 import {userHasReadAccessToOrganization, userHasWriteAccessToOrganization} from "@/lib/db/user";
 import {moduleSchema} from "@/lib/validations/module";
 import {ModuleParam} from "@prisma/client";
@@ -31,7 +31,7 @@ export async function GET(req: NextRequest, context: z.infer<typeof routeContext
       return NextResponse.json({error: 'Unauthorized'}, {status: 403})
     }
 
-    const entities = await db.module.findMany({
+    const entities = await prisma.module.findMany({
       select: {
         id: true,
         code: true,
@@ -76,7 +76,7 @@ export async function POST(req: Request, context: z.infer<typeof routeContextSch
     const json = await req.json()
     const body = moduleSchema.parse(json)
 
-    const entity = await db.module.create({
+    const entity = await prisma.module.create({
       select: {
         id: true,
         code: true,

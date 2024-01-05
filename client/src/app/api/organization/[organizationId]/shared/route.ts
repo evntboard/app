@@ -3,7 +3,7 @@ import {NextRequest, NextResponse} from "next/server";
 import * as z from "zod"
 
 import {authOptions} from "@/lib/auth"
-import {db} from "@/lib/db"
+import {nc, prisma} from "@/lib/singleton";
 import {userHasReadAccessToOrganization, userHasWriteAccessToOrganization} from "@/lib/db/user";
 import {sharedSchema} from "@/lib/validations/shared";
 
@@ -29,7 +29,7 @@ export async function GET(req: NextRequest, context: z.infer<typeof routeContext
       return NextResponse.json({error: 'Unauthorized'}, {status: 403})
     }
 
-    const entities = await db.shared.findMany({
+    const entities = await prisma.shared.findMany({
       select: {
         id: true,
         name: true,
@@ -68,7 +68,7 @@ export async function POST(req: Request, context: z.infer<typeof routeContextSch
     const json = await req.json()
     const body = sharedSchema.parse(json)
 
-    const entity = await db.shared.create({
+    const entity = await prisma.shared.create({
       data: {
         name: body.name,
         code: body.code,

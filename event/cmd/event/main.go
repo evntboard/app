@@ -3,6 +3,7 @@ package main
 import (
 	"github.com/evntboard/app/event/service"
 	"github.com/joho/godotenv"
+	"log"
 )
 
 func main() {
@@ -11,20 +12,33 @@ func main() {
 	globalConfig := service.NewConfigService()
 
 	databaseService := service.NewDbService(globalConfig)
-	redisService := service.NewRedisService(globalConfig)
+	natsService := service.NewNatsService(globalConfig)
 
-	storageTempService := service.NewStorageTemporary(redisService)
-	storagePersistentService := service.NewStoragePersistent(databaseService)
+	storageService := service.NewStorage(databaseService)
 	sharedService := service.NewSharedService(databaseService)
 	triggerService := service.NewTriggerService(databaseService)
+	eventService := service.NewEventService(databaseService)
+	processService := service.NewProcessService(databaseService)
+	moduleSessionService := service.NewModuleSessionService(databaseService)
+	processRequestService := service.NewProcessRequestService(databaseService)
+	processLogService := service.NewProcessLogService(databaseService)
+	lockService := service.NewLockService(databaseService)
 
 	evt := service.NewEventsManagerService(
 		sharedService,
 		triggerService,
-		storagePersistentService,
-		storageTempService,
-		redisService,
+		eventService,
+		processService,
+		storageService,
+		moduleSessionService,
+		processRequestService,
+		processLogService,
+		natsService,
+		lockService,
 	)
 
-	evt.StartProcessEvents()
+	err := evt.StartProcessEvents()
+	if err != nil {
+		log.Fatalln(err)
+	}
 }

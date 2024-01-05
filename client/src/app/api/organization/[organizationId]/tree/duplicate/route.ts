@@ -1,6 +1,6 @@
 import * as z from "zod"
 
-import {db} from "@/lib/db"
+import {prisma} from "@/lib/singleton";
 import {getServerSession} from "next-auth/next";
 import {authOptions} from "@/lib/auth";
 import {userHasWriteAccessToOrganization} from "@/lib/db/user";
@@ -33,7 +33,7 @@ export async function GET(req: NextRequest, context: z.infer<typeof routeContext
     const targetPath = req.nextUrl.searchParams.get('target-path') ?? '/dup/'
 
     const [triggers, shareds] = await Promise.all([
-      db.trigger.findMany({
+      prisma.trigger.findMany({
         where: {
           organizationId: params.organizationId,
           name: {
@@ -44,7 +44,7 @@ export async function GET(req: NextRequest, context: z.infer<typeof routeContext
           conditions: true
         }
       }),
-      db.shared.findMany({
+      prisma.shared.findMany({
         where: {
           organizationId: params.organizationId,
           name: {
@@ -56,7 +56,7 @@ export async function GET(req: NextRequest, context: z.infer<typeof routeContext
 
     await Promise.all([
       ...triggers.map((t) => {
-        return db.trigger.create({
+        return prisma.trigger.create({
           data: {
             name: t.name.replace(path, targetPath),
             code: t.code,
@@ -65,7 +65,7 @@ export async function GET(req: NextRequest, context: z.infer<typeof routeContext
             organizationId: params.organizationId,
             conditions: {
               createMany: {
-                data:  (t.conditions as Condition[]).map((condition) => ({
+                data: (t.conditions as Condition[]).map((condition) => ({
                   name: condition.name,
                   enable: condition.enable,
                   code: condition.code,
@@ -78,7 +78,7 @@ export async function GET(req: NextRequest, context: z.infer<typeof routeContext
         });
       }),
       ...shareds.map((s) => {
-        return db.shared.create({
+        return prisma.shared.create({
           data: {
             name: s.name.replace(path, targetPath),
             code: s.code,

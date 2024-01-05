@@ -3,7 +3,7 @@ import {getServerSession} from "next-auth/next";
 import {authOptions} from "@/lib/auth";
 import {userHasWriteAccessToOrganization} from "@/lib/db/user";
 import {NextRequest, NextResponse} from "next/server";
-import {db} from "@/lib/db";
+import {nc, prisma} from "@/lib/singleton";;
 import {generateTree} from "@/lib/tree";
 
 const routeContextSchema = z.object({
@@ -37,7 +37,7 @@ export async function DELETE(
       return NextResponse.json({error: 'SearchParams "path" is required.'}, {status: 422})
     }
 
-    await db.trigger.deleteMany({
+    await prisma.trigger.deleteMany({
       where: {
         organizationId: params.organizationId,
         name: {
@@ -46,7 +46,7 @@ export async function DELETE(
       },
     })
 
-    await db.shared.deleteMany({
+    await prisma.shared.deleteMany({
       where: {
         organizationId: params.organizationId,
         name: {
@@ -83,7 +83,7 @@ export async function GET(req: NextRequest, context: z.infer<typeof routeContext
 
     const path = req.nextUrl.searchParams.get('path') ?? '/'
 
-    const triggersP = db.trigger.findMany({
+    const triggersP = prisma.trigger.findMany({
       where: {
         organizationId: params.organizationId,
         name: {
@@ -92,7 +92,7 @@ export async function GET(req: NextRequest, context: z.infer<typeof routeContext
       },
     })
 
-    const sharedsP = db.shared.findMany({
+    const sharedsP = prisma.shared.findMany({
       where: {
         organizationId: params.organizationId,
         name: {

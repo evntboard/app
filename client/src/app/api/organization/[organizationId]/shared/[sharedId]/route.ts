@@ -1,6 +1,6 @@
 import * as z from "zod"
 
-import {db} from "@/lib/db"
+import {nc, prisma} from "@/lib/singleton";
 import {sharedSchema} from "@/lib/validations/shared"
 import {getServerSession} from "next-auth/next";
 import {authOptions} from "@/lib/auth";
@@ -34,7 +34,7 @@ export async function DELETE(
     }
 
     // Delete the post.
-    await db.shared.delete({
+    await prisma.shared.delete({
       where: {
         id: params.sharedId as string,
       },
@@ -74,7 +74,7 @@ export async function PATCH(
     const json = await req.json()
     const body = sharedSchema.parse(json)
 
-    await db.shared.update({
+    await prisma.shared.update({
       where: {
         id: params.sharedId,
       },
@@ -110,7 +110,7 @@ export async function GET(req: NextRequest, context: z.infer<typeof routeContext
       return NextResponse.json({error: 'Unauthorized'}, {status: 403})
     }
 
-    const entities = await db.shared.findFirstOrThrow({
+    const entities = await prisma.shared.findFirstOrThrow({
       where: {
         organizationId: params.organizationId,
         id: params.sharedId

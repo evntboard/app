@@ -1,6 +1,6 @@
 import * as z from "zod"
 
-import {db} from "@/lib/db"
+import {nc, prisma} from "@/lib/singleton";
 import {getServerSession} from "next-auth/next";
 import {authOptions} from "@/lib/auth";
 import {userHasWriteAccessToOrganization} from "@/lib/db/user";
@@ -30,7 +30,7 @@ export async function GET(req: NextRequest, context: z.infer<typeof routeContext
     }
 
 
-    const entity = await db.shared.findFirstOrThrow({
+    const entity = await prisma.shared.findFirstOrThrow({
       where: {
         organizationId: params.organizationId,
         id: params.sharedId
@@ -39,7 +39,7 @@ export async function GET(req: NextRequest, context: z.infer<typeof routeContext
 
     const targetPath = req.nextUrl.searchParams.get('target-path') ?? entity.name + '-dup'
 
-    await db.shared.create({
+    await prisma.shared.create({
       data: {
         name: targetPath,
         code: entity.code,

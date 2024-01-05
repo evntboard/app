@@ -1,11 +1,9 @@
-import {getServerSession} from "next-auth/next"
-import {NextResponse} from "next/server";
-import * as z from "zod"
-
-import {authOptions} from "@/lib/auth"
-import {db} from "@/lib/db"
-import {userHasWriteAccessToOrganization} from "@/lib/db/user";
+import {NextRequest, NextResponse} from "next/server";
+import * as z from "zod";
 import {eventSchema} from "@/lib/validations/event";
+import {userHasWriteAccessToOrganization} from "@/lib/db/user";
+import {addEvent, getEventsByOrganizationId} from "@/lib/db/event";
+import {getCurrentUser} from "@/lib/session";
 
 const routeContextSchema = z.object({
   params: z.object({
@@ -13,49 +11,67 @@ const routeContextSchema = z.object({
   }),
 })
 
-
-export async function POST(req: Request, context: z.infer<typeof routeContextSchema>) {
+export async function POST(req: NextRequest, context: z.infer<typeof routeContextSchema>) {
   try {
     const {params} = routeContextSchema.parse(context)
 
-    const session = await getServerSession(authOptions)
+    const currentUser = await getCurrentUser()
 
-    if (!session) {
+    if (!currentUser) {
       return NextResponse.json({error: 'Unauthorized'}, {status: 401})
     }
 
-    const hasAccess = await userHasWriteAccessToOrganization(params.organizationId, session.user.id)
+    const hasAccess = await userHasWriteAccessToOrganization(params.organizationId, currentUser.id)
 
     if (!hasAccess) {
       return NextResponse.json({error: 'Unauthorized'}, {status: 403})
     }
 
-    // TODO CHECK SUBSCRIPTION PLAN
-
     const json = await req.json()
     const body = eventSchema.parse(json)
 
-    const entity = await db.event.create({
-      data: {
-        name: body.name,
-        payload: body.payload,
-        description: body.description,
-        organizationId: params.organizationId,
-      },
-      select: {
-        id: true,
-        name: true,
-        payload: true,
-      },
-    })
-
-    return NextResponse.json(entity)
-  } catch (error) {
-    console.log(error)
-    if (error instanceof z.ZodError) {
-      return NextResponse.json({error}, {status: 422})
+    try {
+      await addEvent(
+        params.organizationId,
+        {
+          name: body.name,
+          payload: body.payload,
+          emittedAt: new Date(),
+          emitterCode: 'WEB',
+          emitterName: 'WEB',
+          organizationId: params.organizationId
+        }
+      )
+    } catch (erreur) {
+      console.error("Erreur lors de l'ajout des données à la liste:", erreur);
     }
 
+    return NextResponse.json(null)
+  } catch (error) {
+    return NextResponse.json({error: 'Internal Server Error'}, {status: 500})
+  }
+}
+
+export async function GET(req: NextRequest, context: z.infer<typeof routeContextSchema>) {
+  try {
+    const {params} = routeContextSchema.parse(context)
+
+    const currentUser = await getCurrentUser()
+
+    if (!currentUser) {
+      return NextResponse.json({error: 'Unauthorized'}, {status: 401})
+    }
+
+    const hasAccess = await userHasWriteAccessToOrganization(params.organizationId, currentUser.id)
+
+    if (!hasAccess) {
+      return NextResponse.json({error: 'Unauthorized'}, {status: 403})
+    }
+
+    const result = await getEventsByOrganizationId(params.organizationId, currentUser.id)
+
+    return NextResponse.json(result)
+  } catch (error) {
     return NextResponse.json({error: 'Internal Server Error'}, {status: 500})
   }
 }

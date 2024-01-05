@@ -9,15 +9,11 @@ import {EjectModule} from "./eject-module";
 
 const columnsProcess: ColumnDef<any>[] = [
   {
-    accessorKey: "sessionId",
-    header: "Session",
-  },
-  {
-    accessorKey: "code",
+    accessorKey: "module.code",
     header: "Code",
   },
   {
-    accessorKey: "name",
+    accessorKey: "module.name",
     header: "Name",
   },
   {

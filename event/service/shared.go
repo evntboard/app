@@ -1,8 +1,10 @@
 package service
 
 import (
+	"context"
 	"fmt"
 	"github.com/evntboard/app/event/model"
+	"log"
 	"strings"
 )
 
@@ -15,6 +17,7 @@ func NewSharedService(dbService *DbService) *SharedService {
 }
 
 func (c *SharedService) GetSharedsFromPathSequence(triggerName string, organizationId string) ([]*model.Shared, error) {
+	ctx := context.Background()
 	keywords := strings.Split(triggerName, "/")
 
 	if len(keywords) <= 2 {
@@ -35,8 +38,26 @@ func (c *SharedService) GetSharedsFromPathSequence(triggerName string, organizat
 		query = fmt.Sprintf("SELECT * FROM shared WHERE shared.organization_id = '%s' AND shared.enable = true AND (shared.name NOT LIKE '/%%/%%' AND shared.name LIKE '/%%') OR %s;", organizationId, strings.Join(conditions, " OR "))
 	}
 
+	rows, err := c.dbService.Db.Query(ctx, query)
+	if err != nil {
+		log.Fatal("Error executing query:", err)
+	}
+	defer rows.Close()
+
 	var shareds []*model.Shared
-	c.dbService.Db.Raw(query).Scan(&shareds)
+
+	for rows.Next() {
+		var shared *model.Shared
+		err := rows.Scan(&shared.ID, &shared.Name, &shared.Code, &shared.Enable)
+		if err != nil {
+			log.Fatal("Error scanning row:", err)
+		}
+		shareds = append(shareds, shared)
+	}
+
+	if err := rows.Err(); err != nil {
+		log.Fatal("Error after scanning rows:", err)
+	}
 
 	return shareds, nil
 }

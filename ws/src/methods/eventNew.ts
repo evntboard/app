@@ -1,14 +1,15 @@
-import {v4 as uuid} from 'uuid'
 import {JSONRPCErrorException, SimpleJSONRPCMethod} from 'json-rpc-2.0'
 
-import {redis} from '../redis'
 import {eventNewSchema} from '../schema'
 import {clients} from '../sessions'
-import {DATA_EVENTS, gChOrgaEvents, gKeyOrgaEvent, gKeyOrgaModules} from "../helper";
+import {DATA_EVENTS, gChOrgaEvents} from "../helper";
+import {prisma} from "../prisma";
+import {getSessionById} from "../db";
+import {nc} from "../nats";
 
 export const eventNew: SimpleJSONRPCMethod<{ clientId: string }> = async (rawParams, {clientId}) => {
   if (!clients.has(clientId)) {
-    return new JSONRPCErrorException(
+    throw new JSONRPCErrorException(
       'Unknown client',
       213,
       "Unknown client"
@@ -17,60 +18,47 @@ export const eventNew: SimpleJSONRPCMethod<{ clientId: string }> = async (rawPar
 
   const client = clients.get(clientId)
 
-  if (!client || !client.organizationId || !client.code || !client.name) {
-    return new JSONRPCErrorException(
-      'Unknown client',
+  const session = await getSessionById(clientId)
+
+  if (!client || !session) {
+    throw new JSONRPCErrorException(
+      'Unknown client or not connected',
       213,
-      "Unknown client"
-    )
-  }
-
-  const keyExist = await redis.hexists(gKeyOrgaModules(client.organizationId), clientId)
-
-  if (!keyExist) {
-    return new JSONRPCErrorException(
-      'Module not connected',
-      12,
-      'Module not connected'
+      "Unknown client or not connected"
     )
   }
 
   const params = eventNewSchema.safeParse(rawParams)
 
   if (params.success === false) {
-    return new JSONRPCErrorException(
+    throw new JSONRPCErrorException(
       'Invalid params',
       213,
       params.error.issues
     )
   }
 
-  const event = {
-    id: uuid(),
-    emitter_code: client.code,
-    emitter_name: client.name,
-    emitted_at: new Date().toISOString(),
-    name: params.data.name,
-    payload: params.data.payload
-  }
-
-  const eventKey = gKeyOrgaEvent(client.organizationId, event.id)
-
-  await redis.hset(
-    eventKey,
-    {
-      id: event.id,
+  const event = await prisma.event.create({
+    select: {
+      id: true,
+      name: true,
+      payload: true,
+      emitterCode: true,
+      emitterName: true,
+      emittedAt: true,
+    },
+    data: {
       name: params.data.name,
-      payload: JSON.stringify(params.data.payload),
-      emitter_code: client.code,
-      emitter_name: client.name,
-      emitted_at: new Date().toISOString(),
+      payload: params.data.payload,
+      emitterCode: session.module.code,
+      emitterName: session.module.name,
+      emittedAt: new Date(),
+      organizationId: session.module.organizationId
     }
-  )
+  })
 
-  await redis.lpush(DATA_EVENTS, eventKey);
-
-  await redis.publish(gChOrgaEvents(client.organizationId), eventKey);
+  nc?.publish(DATA_EVENTS, event.id)
+  nc?.publish(gChOrgaEvents(session.module.organizationId), event.id)
 
   return event
 }

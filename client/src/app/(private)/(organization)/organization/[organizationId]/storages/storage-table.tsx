@@ -81,17 +81,14 @@ export const StorageTable = (props: Props) => {
     evtSource.addEventListener('message', ({data: raw}) => {
       try {
         const data: { key: string, value: string } = jsonParse(raw)
-        console.log(data)
-        // setEntities((old) => {
-        //   // console.log(old.filter(({id}) => id !== data.id))
-        //   // return [
-        //   //   ...old.filter(({id}) => id !== data.id),
-        //   //   {
-        //   //     ...data,
-        //   //     organizationId: "null"
-        //   //   }
-        //   // ]
-        // })
+        setEntities((old) => {
+          return [
+            ...old.filter(({key}) => key !== data.key),
+            {
+              ...data
+            }
+          ]
+        })
       } catch (e) {
         console.error(`Invalid message: ${raw}`)
       }

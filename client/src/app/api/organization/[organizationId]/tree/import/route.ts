@@ -2,7 +2,7 @@ import * as z from "zod"
 import {getServerSession} from "next-auth/next";
 import {NextRequest, NextResponse} from "next/server";
 
-import {db} from "@/lib/db"
+import {nc, prisma} from "@/lib/singleton";
 import {authOptions} from "@/lib/auth";
 import {userHasWriteAccessToOrganization} from "@/lib/db/user";
 import {importPostSchema} from "@/lib/validations/import";
@@ -33,7 +33,7 @@ export async function POST(req: NextRequest, context: z.infer<typeof routeContex
     const json = await req.json()
     const body = importPostSchema.parse(json)
 
-    const promsT = body.triggers.map((trigger) => db.trigger.create({
+    const promsT = body.triggers.map((trigger) => prisma.trigger.create({
       data: {
         name: `${body.slug}${trigger.name.substring(1)}` ,
         enable: false,
@@ -56,7 +56,7 @@ export async function POST(req: NextRequest, context: z.infer<typeof routeContex
       },
     }))
 
-    const promsS = body.shareds.map((shared) => db.shared.create({
+    const promsS = body.shareds.map((shared) => prisma.shared.create({
       data: {
         name: `${body.slug}${shared.name.substring(1)}` ,
         code: shared.code,
