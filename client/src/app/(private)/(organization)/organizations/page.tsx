@@ -3,7 +3,7 @@ import {redirect} from "next/navigation";
 
 import {getCurrentUser} from "@/lib/session";
 import {cn} from "@/lib/utils";
-import {authOptions} from "@/lib/auth";
+import authOptions from "@/lib/auth.config";
 import {getOrganizationsByUserId} from "@/lib/db/organization";
 import {DashboardHeader} from "@/components/header";
 import {buttonVariants} from "@/components/ui/button";

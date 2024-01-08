@@ -3,7 +3,7 @@ import {redirect} from "next/navigation"
 import Link from "next/link";
 
 import {getCurrentUser} from "@/lib/session"
-import {authOptions} from "@/lib/auth";
+import authConfig from "@/lib/auth.config";
 import {getOrganizationByUserId} from "@/lib/db/organization";
 import {cn} from "@/lib/utils";
 import {buttonVariants} from "@/components/ui/button";
@@ -22,7 +22,7 @@ export default async function DashboardLayout({children, params}: Props) {
   const user = await getCurrentUser()
 
   if (!user) {
-    redirect(authOptions?.pages?.signIn || "/login")
+    redirect(authConfig?.pages?.signIn || "/login")
   }
 
   const organization = await getOrganizationByUserId(user.id, params.organizationId)

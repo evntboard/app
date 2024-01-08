@@ -3,7 +3,7 @@ import * as z from "zod"
 import {nc, prisma} from "@/lib/singleton";
 import {triggerSchema} from "@/lib/validations/trigger"
 import {getServerSession} from "next-auth/next";
-import {authOptions} from "@/lib/auth";
+import authOptions from "@/lib/auth.config";
 import {userHasReadAccessToOrganization, userHasWriteAccessToOrganization} from "@/lib/db/user";
 import {NextRequest, NextResponse} from "next/server";
 import {Condition} from "@prisma/client";
@@ -22,7 +22,7 @@ export async function DELETE(
   try {
     const {params} = routeContextSchema.parse(context)
 
-    const session = await getServerSession(authOptions)
+    const session = await auth()
 
     if (!session) {
       return NextResponse.json({error: 'Unauthorized'}, {status: 401})
@@ -59,7 +59,7 @@ export async function PATCH(
   try {
     const {params} = routeContextSchema.parse(context)
 
-    const session = await getServerSession(authOptions)
+    const session = await auth()
 
     if (!session) {
       return NextResponse.json({error: 'Unauthorized'}, {status: 401})
@@ -143,7 +143,7 @@ export async function GET(req: NextRequest, context: z.infer<typeof routeContext
   try {
     const {params} = routeContextSchema.parse(context)
 
-    const session = await getServerSession(authOptions)
+    const session = await auth()
 
     if (!session) {
       return NextResponse.json({error: 'Unauthorized'}, {status: 401})

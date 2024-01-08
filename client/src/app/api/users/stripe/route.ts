@@ -12,7 +12,7 @@ const billingUrl = absoluteUrl("/dashboard/billing")
 
 export async function GET(req: Request) {
   try {
-    const session = await getServerSession(authOptions)
+    const session = await auth()
 
     if (!session?.user || !session?.user.email) {
       return new Response(null, { status: 403 })

@@ -3,7 +3,7 @@ import * as z from "zod"
 import {NextRequest, NextResponse} from "next/server";
 import {getServerSession} from "next-auth/next";
 import {nc, prisma} from "@/lib/singleton";
-import {authOptions} from "@/lib/auth";
+import authOptions from "@/lib/auth.config";
 import {userHasReadAccessToOrganization, userHasWriteAccessToOrganization} from "@/lib/db/user";
 import {userIdSchema} from "@/lib/validations/user";
 
@@ -17,7 +17,7 @@ export async function GET(req: NextRequest, context: z.infer<typeof routeContext
   try {
     const {params} = routeContextSchema.parse(context)
 
-    const session = await getServerSession(authOptions)
+    const session = await auth()
 
     if (!session) {
       return NextResponse.json({error: 'Unauthorized'}, {status: 401})
@@ -78,7 +78,7 @@ export async function POST(req: NextRequest, context: z.infer<typeof routeContex
   try {
     const {params} = routeContextSchema.parse(context)
 
-    const session = await getServerSession(authOptions)
+    const session = await auth()
 
     if (!session) {
       return NextResponse.json({error: 'Unauthorized'}, {status: 401})

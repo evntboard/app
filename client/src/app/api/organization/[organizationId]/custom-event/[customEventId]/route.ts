@@ -1,11 +1,10 @@
 import * as z from "zod"
 import {NextRequest, NextResponse} from "next/server";
-import {getServerSession} from "next-auth/next";
 
-import {nc, prisma} from "@/lib/singleton";
+import {prisma} from "@/lib/singleton";
 import {customEventSchema} from "@/lib/validations/customEvent"
-import {authOptions} from "@/lib/auth";
 import {userHasReadAccessToOrganization, userHasWriteAccessToOrganization} from "@/lib/db/user";
+import {auth} from "@/lib/auth";
 
 const routeContextSchema = z.object({
   params: z.object({
@@ -21,7 +20,7 @@ export async function DELETE(
   try {
     const {params} = routeContextSchema.parse(context)
 
-    const session = await getServerSession(authOptions)
+    const session = await auth()
 
     if (!session) {
       return NextResponse.json({error: 'Unauthorized'}, {status: 401})
@@ -58,7 +57,7 @@ export async function PATCH(
     // Validate the route params.
     const {params} = routeContextSchema.parse(context)
 
-    const session = await getServerSession(authOptions)
+    const session = await auth()
 
     if (!session) {
       return NextResponse.json({error: 'Unauthorized'}, {status: 401})
@@ -99,7 +98,7 @@ export async function GET(req: NextRequest, context: z.infer<typeof routeContext
   try {
     const {params} = routeContextSchema.parse(context)
 
-    const session = await getServerSession(authOptions)
+    const session = await auth()
 
     if (!session) {
       return NextResponse.json({error: 'Unauthorized'}, {status: 401})

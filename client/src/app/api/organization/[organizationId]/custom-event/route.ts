@@ -1,9 +1,8 @@
-import {getServerSession} from "next-auth/next"
 import {NextResponse} from "next/server";
 import * as z from "zod"
 
-import {authOptions} from "@/lib/auth"
-import {nc, prisma} from "@/lib/singleton";
+import {auth} from "@/lib/auth"
+import {prisma} from "@/lib/singleton";
 import {userHasWriteAccessToOrganization} from "@/lib/db/user";
 import {customEventSchema} from "@/lib/validations/customEvent";
 
@@ -18,7 +17,7 @@ export async function POST(req: Request, context: z.infer<typeof routeContextSch
   try {
     const {params} = routeContextSchema.parse(context)
 
-    const session = await getServerSession(authOptions)
+    const session = await auth()
 
     if (!session) {
       return NextResponse.json({error: 'Unauthorized'}, {status: 401})

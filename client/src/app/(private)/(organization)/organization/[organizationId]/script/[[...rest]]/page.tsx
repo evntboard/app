@@ -1,6 +1,6 @@
 import {redirect} from "next/navigation";
 
-import {authOptions} from "@/lib/auth";
+import authOptions from "@/lib/auth.config";
 import {generateTree} from "@/lib/tree";
 import {getCurrentUser} from "@/lib/session";
 import {getScriptsForUserIdAndOrganizationId} from "@/lib/db/scripts";

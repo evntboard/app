@@ -21,7 +21,7 @@ export async function PATCH(
     const { params } = routeContextSchema.parse(context)
 
     // Ensure user is authentication and has access to this user.
-    const session = await getServerSession(authOptions)
+    const session = await auth()
     if (!session?.user || params.userId !== session?.user.id) {
       return new Response(null, { status: 403 })
     }

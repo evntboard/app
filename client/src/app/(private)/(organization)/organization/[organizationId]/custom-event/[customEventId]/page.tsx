@@ -3,7 +3,7 @@ import {notFound, redirect} from "next/navigation";
 import Link from "next/link";
 
 import {getCurrentUser} from "@/lib/session";
-import {authOptions} from "@/lib/auth";
+import authOptions from "@/lib/auth.config";
 import {cn} from "@/lib/utils";
 import {Icons} from "@/components/icons";
 import {buttonVariants} from "@/components/ui/button";

@@ -1,9 +1,8 @@
 import * as z from "zod"
-import {getServerSession} from "next-auth/next";
 import {NextRequest, NextResponse} from "next/server";
 
 import {nc, prisma} from "@/lib/singleton";
-import {authOptions} from "@/lib/auth";
+import {auth} from "@/lib/auth"
 import {userHasWriteAccessToOrganization} from "@/lib/db/user";
 
 const routeContextSchema = z.object({
@@ -17,7 +16,7 @@ export async function GET(req: NextRequest, context: z.infer<typeof routeContext
   try {
     const {params} = routeContextSchema.parse(context)
 
-    const session = await getServerSession(authOptions)
+    const session = await auth()
 
     if (!session) {
       return NextResponse.json({error: 'Unauthorized'}, {status: 401})

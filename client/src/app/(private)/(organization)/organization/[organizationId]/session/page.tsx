@@ -1,7 +1,7 @@
 import {redirect} from "next/navigation";
 
 import {getCurrentUser} from "@/lib/session";
-import {authOptions} from "@/lib/auth";
+import authOptions from "@/lib/auth.config";
 import {userHasWriteAccessToOrganization} from "@/lib/db/user";
 import {getSessionsForOrganizationId} from "@/lib/db/session";
 

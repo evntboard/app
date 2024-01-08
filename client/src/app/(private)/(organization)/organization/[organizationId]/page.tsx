@@ -3,7 +3,7 @@ import {notFound, redirect} from "next/navigation";
 
 import {getOrganizationByUserId} from "@/lib/db/organization";
 import {getCurrentUser} from "@/lib/session";
-import {authOptions} from "@/lib/auth";
+import authOptions from "@/lib/auth.config";
 import {userHasWriteAccessToOrganization} from "@/lib/db/user";
 import {UserAvatarName} from "@/components/user-avatar-name";
 

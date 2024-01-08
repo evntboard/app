@@ -3,7 +3,7 @@ import {redirect} from "next/navigation";
 import Link from "next/link";
 
 import {getCurrentUser} from "@/lib/session";
-import {authOptions} from "@/lib/auth";
+import authOptions from "@/lib/auth.config";
 import {getEventProcessAndLogById} from "@/lib/db/event";
 import {cn} from "@/lib/utils";
 import {Icons} from "@/components/icons";

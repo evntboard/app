@@ -2,7 +2,7 @@ import * as React from "react";
 import {redirect} from "next/navigation";
 
 import {getCurrentUser} from "@/lib/session";
-import {authOptions} from "@/lib/auth";
+import authOptions from "@/lib/auth.config";
 import {getStoragesByUserIdAndOrganizationId} from "@/lib/db/storage";
 
 import {StorageTable} from "./storage-table";

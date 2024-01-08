@@ -18,7 +18,7 @@ export async function GET(req: NextRequest, context: z.infer<typeof routeContext
   try {
     const {params} = routeContextSchema.parse(context)
 
-    const session = await getServerSession(authOptions)
+    const session = await auth()
 
     if (!session) {
       return NextResponse.json({error: 'Unauthorized'}, {status: 401})
@@ -63,7 +63,7 @@ export async function POST(req: Request, context: z.infer<typeof routeContextSch
   try {
     const {params} = routeContextSchema.parse(context)
 
-    const session = await getServerSession(authOptions)
+    const session = await auth()
 
     if (!session) {
       return NextResponse.json({error: 'Unauthorized'}, {status: 401})

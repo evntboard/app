@@ -3,7 +3,7 @@ import {redirect} from "next/navigation";
 import Link from "next/link";
 
 import {getCurrentUser} from "@/lib/session";
-import {authOptions} from "@/lib/auth";
+import authOptions from "@/lib/auth.config";
 import {userHasWriteAccessToOrganization} from "@/lib/db/user";
 import {getModulesByUserIdAndOrganizationId} from "@/lib/db/module";
 import {cn} from "@/lib/utils";

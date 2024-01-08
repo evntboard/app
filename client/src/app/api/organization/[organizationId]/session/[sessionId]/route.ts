@@ -1,9 +1,8 @@
 import * as z from "zod";
-import {getServerSession} from "next-auth/next";
 import {NextResponse} from "next/server";
 
+import {auth} from "@/lib/auth"
 import {nc, prisma} from "@/lib/singleton";
-import {authOptions} from "@/lib/auth";
 import {userHasWriteAccessToOrganization} from "@/lib/db/user";
 import {gChOrgaModuleEject} from "@/lib/helper";
 
@@ -23,7 +22,7 @@ export async function DELETE(
   try {
     const {params} = routeContextSchema.parse(context)
 
-    const session = await getServerSession(authOptions)
+    const session = await auth()
 
     if (!session) {
       return NextResponse.json({error: 'Unauthorized'}, {status: 401})
