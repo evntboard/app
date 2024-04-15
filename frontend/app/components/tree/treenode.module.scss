@@ -1,0 +1,73 @@
+.treeNode {
+  display: flex;
+  padding: .25rem;
+  cursor: pointer;
+
+  .path {
+    width: 24px;
+    flex-shrink: 0;
+    position: relative;
+
+    &:before {
+      content: "";
+      position: absolute;
+      height: calc(100% +  8px );
+      top: -4px;
+      left: 8px;
+      border-left: 1px dashed #ced4da;
+    }
+
+    &:last-of-type:after {
+      content: "";
+      position: absolute;
+      width: calc(100% - 12px);
+      top: 12px;
+      left: 10px;
+      border-bottom: 1px dashed #ced4da;
+    }
+  }
+
+  .icon {
+    display: flex;
+    align-items: center;
+    cursor: pointer;
+    flex-shrink: 0;
+  }
+
+  .fileIcon {
+    display: flex;
+    align-items: center;
+    flex-shrink: 0;
+
+    .container {
+      position: relative;
+
+      .icon {
+        display: inline-flex;
+        position: absolute;
+        top: -5px;
+        left: -5px;
+        justify-content: center;
+        align-items: center;
+        height: .5rem;
+        width: .5rem;
+        border-radius: 100000px;
+
+        &.enable {
+          background-color: #51cf66;
+        }
+
+        &.disable {
+          background-color: #ff6b6b;
+        }
+      }
+    }
+  }
+
+  .name {
+    display: flex;
+    align-items: center;
+    padding-left: 4px;
+    white-space: nowrap;
+  }
+}

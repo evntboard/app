@@ -1,0 +1,6 @@
+**
+!/migrations/
+!/utils/
+!/*.go
+!/go.mod
+!/go.sum

@@ -1,0 +1,11 @@
+pocketbase.exe
+pocketbase
+pb_data
+.DS_Store
+go_build_evntboard
+go_build_evntboard.exe
+go_evntboard.exe
+go_evntboard
+dev_server
+build_server
+build_server.exe
