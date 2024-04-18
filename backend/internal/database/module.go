@@ -31,7 +31,7 @@ func (c *PocketBaseClient) GetModuleByCodeNameToken(code, name, token string) (*
 	strFilter := fmt.Sprintf("code = \"%s\" && name = \"%s\" && token = \"%s\"", code, name, token)
 	response, err := collection.List(pocketbase.ParamsList{
 		Size:    1,
-		Page:    1,
+		Page:    0,
 		Sort:    "+created",
 		Filters: strFilter,
 		Expand:  "module_params_via_module",
@@ -63,10 +63,10 @@ func (c *PocketBaseClient) GenerateModuleSession(module *model.Module) error {
 func (c *PocketBaseClient) GetModuleWithSessionByOrganizationIdAndNameOrCode(organizationId, name string) (*model.Module, error) {
 	collection := pocketbase.CollectionSet[model.Module](c.pb, "modules")
 
-	strFilter := fmt.Sprintf("organization = \"%s\" && (name = \"%s\" || code =\"%s\")", organizationId, name, name)
+	strFilter := fmt.Sprintf("organization = \"%s\" && session != \"\" && (name = \"%s\" || code =\"%s\")", organizationId, name, name)
 	response, err := collection.List(pocketbase.ParamsList{
 		Size:    1,
-		Page:    1,
+		Page:    0,
 		Sort:    "+created",
 		Filters: strFilter,
 		Expand:  "",
@@ -87,7 +87,7 @@ func (c *PocketBaseClient) ResetAllModuleSession() error {
 	collection := pocketbase.CollectionSet[model.Module](c.pb, "modules")
 	response, err := collection.List(pocketbase.ParamsList{
 		Size:    500,
-		Page:    1,
+		Page:    0,
 		Sort:    "+created",
 		Filters: "session != \"\"",
 		Expand:  "",
