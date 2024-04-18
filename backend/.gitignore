@@ -7,5 +7,6 @@ go_build_evntboard.exe
 go_evntboard.exe
 go_evntboard
 dev_server
+dev_server_api
 build_server
 build_server.exe

@@ -18,8 +18,14 @@ jobs:
     strategy:
       matrix:
         include:
-          - dockerfile: ./backend/Dockerfile
-            image: evntboard/backend
+          - dockerfile: ./backend/Dockerfile_api
+            image: evntboard/backend-api
+            context: ./backend
+          - dockerfile: ./backend/Dockerfile_event
+            image: evntboard/backend-event
+            context: ./backend
+          - dockerfile: ./backend/Dockerfile_module
+            image: evntboard/backend-module
             context: ./backend
           - dockerfile: ./frontend/Dockerfile
             image: evntboard/frontend
