@@ -76,7 +76,7 @@ func (c *PocketBaseClient) GetModuleWithSessionByOrganizationIdAndNameOrCode(org
 		return nil, err
 	}
 
-	if response.TotalItems != 1 {
+	if response.TotalItems == 0 {
 		return nil, errors.New("not found")
 	}
 
