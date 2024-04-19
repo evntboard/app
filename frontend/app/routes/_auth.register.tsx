@@ -121,13 +121,14 @@ export default function Login() {
       className="container relative min-h-screen flex-col items-center justify-center grid"
     >
       <Link
-        to="/login"
+        to="/"
         className={cn(
           buttonVariants({ variant: 'outline' }),
           'absolute left-4 top-4 md:left-8 md:top-8',
         )}
       >
-        Login
+        <Icons.chevronLeft className="mr-2 h-4 w-4"/>
+        Back
       </Link>
       <div className="absolute right-4 top-4 md:right-8 md:top-8">
         <ThemeToggle />
@@ -199,11 +200,25 @@ export default function Login() {
                     {actionData?.errors?.global?.message}
                   </p>
                 )}
-                <Button type="submit" className={cn(buttonVariants(), 'flex gap-2')}>
-                  Continue{' '}
-                  <Icons.spinner
-                    className={cn('mr-2 h-4 w-4animate-spin', navigation.state == 'idle' ? 'hidden' : '')} />
-                </Button>
+                <div className="flex gap-2">
+                  <Link
+                    to={`/login`}
+                    className={cn(
+                      "grow",
+                      buttonVariants({variant: "outline"}),
+                    )}
+                  >
+                    <>
+                      <Icons.signin className="mr-2 h-4 w-4"/>
+                      Login
+                    </>
+                  </Link>
+                  <Button type="submit" className={cn(buttonVariants(), 'flex gap-2 grow')}>
+                    Continue{' '}
+                    <Icons.spinner
+                      className={cn('mr-2 h-4 w-4animate-spin', navigation.state == 'idle' ? 'hidden' : '')} />
+                  </Button>
+                </div>
               </RForm>
             </Form>
           </div>

@@ -46,7 +46,7 @@ export async function action({ request }: ActionFunctionArgs) {
         })
       }
 
-      return createSession('/', pb)
+      return createSession('/organizations', pb)
     } catch (e) {
       if (e instanceof ClientResponseError) {
         return json({
@@ -125,13 +125,14 @@ export default function _authLogin() {
       className="container relative min-h-screen flex-col items-center justify-center grid"
     >
       <Link
-        to="/register"
+        to="/"
         className={cn(
           buttonVariants({ variant: 'outline' }),
           'absolute left-4 top-4 md:left-8 md:top-8',
         )}
       >
-        Register
+        <Icons.chevronLeft className="mr-2 h-4 w-4"/>
+        Back
       </Link>
       <div className="absolute right-4 top-4 md:right-8 md:top-8">
         <ThemeToggle />
@@ -193,11 +194,25 @@ export default function _authLogin() {
                     {actionData?.errors?.global?.message}
                   </p>
                 )}
-                <Button type="submit" className={cn(buttonVariants(), 'flex gap-2')}>
-                  Connect{' '}
-                  <Icons.spinner
-                    className={cn('mr-2 h-4 w-4animate-spin', navigation.state == 'idle' ? 'hidden' : '')} />
-                </Button>
+                <div className="flex gap-2">
+                  <Link
+                    to={`/register`}
+                    className={cn(
+                      "grow",
+                      buttonVariants({variant: "outline"}),
+                    )}
+                  >
+                    <>
+                      <Icons.add className="mr-2 h-4 w-4"/>
+                      Register
+                    </>
+                  </Link>
+                  <Button type="submit" className={cn(buttonVariants(), 'flex gap-2 grow')}>
+                    Connect{' '}
+                    <Icons.spinner
+                      className={cn('mr-2 h-4 w-4animate-spin', navigation.state == 'idle' ? 'hidden' : '')} />
+                  </Button>
+                </div>
               </RForm>
             </Form>
           </div>
