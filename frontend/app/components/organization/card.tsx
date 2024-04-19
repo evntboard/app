@@ -21,10 +21,12 @@ export const OrganizationCard = ({ organization }: Props) => {
           <AvatarPb
             url={getAvatarUrl(organization)}
           />
-          {organization.name}
+          <span className="text-ellipsis overflow-hidden">
+            {organization.name}
+          </span>
         </CardTitle>
       </CardHeader>
-      <CardContent className="flex flex-col gap-2">
+      <CardContent>
         {organization.expand?.user_organization_via_organization[0].expand?.user?.name ?? '-'}
       </CardContent>
       <CardFooter className="flex justify-between">
