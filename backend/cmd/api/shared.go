@@ -1,7 +1,11 @@
 package main
 
 import (
+	"database/sql"
+	"errors"
 	"github.com/evntboard/app/backend/utils"
+	"github.com/pocketbase/dbx"
+	"github.com/pocketbase/pocketbase/core"
 	"github.com/pocketbase/pocketbase/models"
 )
 
@@ -49,4 +53,27 @@ func (app *application) CreateSharedFromExport(organizationId, path string, expo
 	}
 
 	return nil
+}
+
+func (app *application) onBeforeCreateShared(e *core.ModelEvent) error {
+	record, _ := e.Model.(*models.Record)
+
+	_, err := app.pb.Dao().FindFirstRecordByFilter(
+		"triggers",
+		"organization = {:organizationId} && name = {:name}",
+		dbx.Params{
+			"organizationId": record.GetString("organization"),
+			"name":           record.GetString("name"),
+		},
+	)
+
+	if err != nil && !errors.Is(err, sql.ErrNoRows) {
+		return err
+	}
+
+	if errors.Is(err, sql.ErrNoRows) {
+		return nil
+	}
+
+	return errors.New("a trigger already exists with this name")
 }

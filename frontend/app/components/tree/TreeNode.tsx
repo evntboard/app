@@ -58,6 +58,7 @@ export const TreeNode = ({
   const isTrigger = node?.type === 'trigger'
   const isShared = node?.type === 'shared'
   const isCondition = node?.type === 'condition'
+  const hasChildren = (node?.children?.length ?? 0) > 0
 
   const isOpen = isOpenable ? open?.includes?.(node?.slug) || false : true
   const isChecked = isCheckable && (checked?.includes(node?.slug) || false)
@@ -70,13 +71,17 @@ export const TreeNode = ({
   const openMe = (e: React.MouseEvent<unknown>) => {
     e.stopPropagation()
     if (isOpenable) {
-      onOpen?.(node)
+      if (!isTrigger || (isTrigger && (node?.children?.length ?? 0) > 0)) {
+        onOpen?.(node)
+      }
     }
   }
   const closeMe = (e: React.MouseEvent<unknown>) => {
     e.stopPropagation()
     if (isOpenable) {
-      onClose?.(node)
+      if (!isTrigger || (isTrigger && (node?.children?.length ?? 0) > 0)) {
+        onClose?.(node)
+      }
     }
   }
 
@@ -117,13 +122,11 @@ export const TreeNode = ({
   return (
     <>
       <ContextMenu>
-        <ContextMenuTrigger
-          className="h-full w-full"
-        >
+        <ContextMenuTrigger className="h-full w-full">
           <div className={cn(styles.treeNode, { ['bg-primary/10']: isSelected })} onClick={handleOnItemSelect}>
             {isCheckable && (<input type="checkbox" checked={isChecked} onChange={handleOnItemCheck} />)}
             {path?.map((_, idx) => <div key={idx} className={styles.path} />)}
-            {(isFolder || isTrigger) && (
+            {isFolder && (
               <div className={styles.icon}>
                 {isOpen && <Icons.down onClick={closeMe} />}
                 {!isOpen && <Icons.right onClick={openMe} />}
@@ -143,6 +146,12 @@ export const TreeNode = ({
                   {isShared && <Icons.shared className="h-5" />}
                   {isTrigger && <Icons.trigger className="h-5" />}
                   {isCondition && <Icons.triggerCondition className="h-5" />}
+                </div>
+              )}
+              {isTrigger && (
+                <div className={cn(styles.iconTrigger, { [styles.disabled]: !hasChildren })}>
+                  {isOpen && hasChildren && <Icons.down onClick={closeMe} />}
+                  {(!isOpen || !hasChildren) && <Icons.right onClick={openMe} />}
                 </div>
               )}
             </div>

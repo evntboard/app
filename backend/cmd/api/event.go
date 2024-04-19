@@ -3,6 +3,7 @@ package main
 import (
 	"encoding/json"
 	"github.com/pocketbase/dbx"
+	"github.com/pocketbase/pocketbase/core"
 	"github.com/pocketbase/pocketbase/models"
 	"time"
 )
@@ -47,4 +48,17 @@ func (app *application) GetAvailableEventNames(organizationId string) ([]*EventN
 		}).
 		All(&eventsNames)
 	return eventsNames, err
+}
+
+func (app *application) onCreateEvent(e *core.ModelEvent) error {
+	record, _ := e.Model.(*models.Record)
+	msgJson, err := record.MarshalJSON()
+	if err != nil {
+		return err
+	}
+
+	if err := app.realtime.Publish("events", msgJson); err != nil {
+		return err
+	}
+	return nil
 }

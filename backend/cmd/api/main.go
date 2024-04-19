@@ -1,15 +1,12 @@
 package main
 
 import (
-	"encoding/json"
 	"github.com/evntboard/app/backend/internal/env"
 	"github.com/evntboard/app/backend/internal/realtime"
 	_ "github.com/evntboard/app/backend/migrations"
 	"github.com/nats-io/nats.go"
 	"github.com/pocketbase/pocketbase"
-	"github.com/pocketbase/pocketbase/apis"
 	"github.com/pocketbase/pocketbase/core"
-	"github.com/pocketbase/pocketbase/models"
 	"github.com/pocketbase/pocketbase/plugins/migratecmd"
 	"log"
 	"os"
@@ -43,71 +40,14 @@ func main() {
 		Automigrate: os.Getenv("MIGRATE") == "1",
 	})
 
-	funcEventPublish := func(e *core.ModelEvent) error {
-		record, _ := e.Model.(*models.Record)
-		msgJson, err := record.MarshalJSON()
-		if err != nil {
-			return err
-		}
+	app.pb.OnModelAfterCreate("events").Add(app.onCreateEvent)
+	app.pb.OnModelAfterCreate("storages").Add(app.onModelStorage)
+	app.pb.OnModelAfterUpdate("storages").Add(app.onModelStorage)
+	app.pb.OnModelAfterDelete("storages").Add(app.onModelStorage)
+	app.pb.OnRecordAfterCreateRequest("organizations").Add(app.onCreateOrganization)
 
-		if err := app.realtime.Publish("events", msgJson); err != nil {
-			return err
-		}
-		return nil
-	}
-
-	funcStoragePublish := func(e *core.ModelEvent) error {
-		record, _ := e.Model.(*models.Record)
-
-		moduleRecords, err := app.GetModulesWithSessionByOrganizationIdAndStorageKey(
-			record.GetString("organization"),
-			record.GetString("key"),
-		)
-		if err != nil {
-			return err
-		}
-
-		msgJson, err := json.Marshal(map[string]any{
-			"type":    "storage",
-			"payload": record,
-		})
-		if err != nil {
-			return err
-		}
-
-		for _, moduleRecord := range moduleRecords {
-			if err := app.realtime.Publish(app.realtime.GetChannelForModule(moduleRecord.GetString("session")), msgJson); err != nil {
-				return err
-			}
-		}
-
-		return nil
-	}
-
-	funcCreatedOrga := func(e *core.RecordCreateEvent) error {
-		collection, err := app.pb.Dao().FindCollectionByNameOrId("user_organization")
-		if err != nil {
-			return err
-		}
-
-		record := models.NewRecord(collection)
-
-		record.Set("user", apis.RequestInfo(e.HttpContext).AuthRecord.Id)
-		record.Set("organization", e.Record.Id)
-		record.Set("role", "CREATOR")
-
-		if err := app.pb.Dao().SaveRecord(record); err != nil {
-			return err
-		}
-
-		return nil
-	}
-
-	app.pb.OnModelAfterCreate("events").Add(funcEventPublish)
-	app.pb.OnModelAfterCreate("storages").Add(funcStoragePublish)
-	app.pb.OnModelAfterUpdate("storages").Add(funcStoragePublish)
-	app.pb.OnModelAfterDelete("storages").Add(funcStoragePublish)
-	app.pb.OnRecordAfterCreateRequest("organizations").Add(funcCreatedOrga)
+	app.pb.OnModelBeforeCreate("triggers").Add(app.onBeforeCreateTrigger)
+	app.pb.OnModelBeforeCreate("shareds").Add(app.onBeforeCreateShared)
 
 	app.pb.OnBeforeServe().Add(func(e *core.ServeEvent) error {
 		g := e.Router.Group("/api")
