@@ -2,7 +2,7 @@ import { ActionFunctionArgs, json, redirect } from '@remix-run/node';
 import { createSession, getPocketbase, getUser } from '~/utils/pb.server';
 import { Collections } from '~/types/pocketbase';
 import { ClientResponseError } from 'pocketbase';
-import { sharedCreateFormSchema, sharedFormSchema } from '~/validation/shared';
+import { sharedCreateFormSchema } from '~/validation/shared';
 
 export async function action(args: ActionFunctionArgs) {
   const pb = getPocketbase(args.request);

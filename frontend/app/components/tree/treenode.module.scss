@@ -2,6 +2,7 @@
   display: flex;
   padding: .25rem;
   cursor: pointer;
+  position: relative;
 
   .path {
     width: 24px;
@@ -32,6 +33,17 @@
     align-items: center;
     cursor: pointer;
     flex-shrink: 0;
+  }
+
+  .iconTrigger {
+    display: flex;
+    align-items: center;
+    cursor: pointer;
+    flex-shrink: 0;
+
+    &.disabled {
+      opacity: 0.5;
+    }
   }
 
   .fileIcon {

@@ -1,8 +1,11 @@
 package main
 
 import (
+	"database/sql"
+	"errors"
 	"github.com/evntboard/app/backend/utils"
 	"github.com/pocketbase/dbx"
+	"github.com/pocketbase/pocketbase/core"
 	"github.com/pocketbase/pocketbase/models"
 )
 
@@ -143,4 +146,27 @@ func NewExportTriggerFromAny(entity map[string]interface{}) ExportTrigger {
 		}
 	}
 	return trigger
+}
+
+func (app *application) onBeforeCreateTrigger(e *core.ModelEvent) error {
+	record, _ := e.Model.(*models.Record)
+
+	_, err := app.pb.Dao().FindFirstRecordByFilter(
+		"shareds",
+		"organization = {:organizationId} && name = {:name}",
+		dbx.Params{
+			"organizationId": record.GetString("organization"),
+			"name":           record.GetString("name"),
+		},
+	)
+
+	if err != nil && !errors.Is(err, sql.ErrNoRows) {
+		return err
+	}
+
+	if errors.Is(err, sql.ErrNoRows) {
+		return nil
+	}
+
+	return errors.New("a shared already exists with this name")
 }

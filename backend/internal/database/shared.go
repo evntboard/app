@@ -7,7 +7,7 @@ import (
 	"strings"
 )
 
-func (app *PocketBaseClient) GetSharedByPath(organizationId string, path string) ([]*model.Shared, error) {
+func (app *PocketBaseClient) GetSharedByPath(organizationId string, triggerName string) ([]*model.Shared, error) {
 	validatePath := func(path string) string {
 		keywords := strings.Split(path, "/")
 		if keywords[len(keywords)-1] != "/" {
@@ -25,11 +25,13 @@ func (app *PocketBaseClient) GetSharedByPath(organizationId string, path string)
 
 	collection := pocketbase.CollectionSet[*model.Shared](app.pb, "shareds")
 
+	filterStr := fmt.Sprintf("organization = \"%s\" && %s", organizationId, validatePath(triggerName))
+
 	records, err := collection.List(
 		pocketbase.ParamsList{
 			Page:    0,
 			Size:    500,
-			Filters: fmt.Sprintf("organization = \"%s\" && "+validatePath(path), organizationId),
+			Filters: filterStr,
 			Sort:    "-created",
 			Expand:  "",
 			Fields:  "",
