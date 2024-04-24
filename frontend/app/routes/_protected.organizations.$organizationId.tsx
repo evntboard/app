@@ -143,11 +143,12 @@ export default function OrganizationIdGeneralLayout() {
               href: `/organizations/${organizationId}`,
               end: true
             },
-            {
-              icon: <Icons.members className="h-4 w-4 mr-2" />,
-              title: 'Members',
-              href: `/organizations/${organizationId}/members`
-            },
+            // TODO members
+            // {
+            //   icon: <Icons.members className="h-4 w-4 mr-2" />,
+            //   title: 'Members',
+            //   href: `/organizations/${organizationId}/members`
+            // },
             {
               icon: <Icons.script className="h-4 w-4 mr-2" />,
               title: 'Script',
@@ -178,7 +179,7 @@ export default function OrganizationIdGeneralLayout() {
               <NavLink
                 key={item.href}
                 to={item.href}
-                className={({ isActive, isPending }) => {
+                className={({ isActive }) => {
                   return cn(
                     buttonVariants({ variant: 'ghost' }),
                     isActive

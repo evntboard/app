@@ -120,16 +120,6 @@ export default function Login() {
     <div
       className="container relative min-h-screen flex-col items-center justify-center grid"
     >
-      <Link
-        to="/"
-        className={cn(
-          buttonVariants({ variant: 'outline' }),
-          'absolute left-4 top-4 md:left-8 md:top-8',
-        )}
-      >
-        <Icons.chevronLeft className="mr-2 h-4 w-4"/>
-        Back
-      </Link>
       <div className="absolute right-4 top-4 md:right-8 md:top-8">
         <ThemeToggle />
       </div>
