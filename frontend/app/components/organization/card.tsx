@@ -6,6 +6,7 @@ import { AvatarPb } from '~/components/avatar-pb';
 import { cn } from '~/utils/cn';
 import { OrganizationsResponse, UserOrganizationResponse, UsersResponse } from '~/types/pocketbase';
 import { getAvatarUrl } from '~/utils/avatar'
+import { useRootContext } from '~/context/root.tsx';
 
 type Props = {
   organization: OrganizationsResponse<{
@@ -14,12 +15,13 @@ type Props = {
 }
 
 export const OrganizationCard = ({ organization }: Props) => {
+  const rootContext = useRootContext()
   return (
     <Card key={organization.id} className="w-full">
       <CardHeader>
         <CardTitle className='flex gap-2 items-center'>
           <AvatarPb
-            url={getAvatarUrl(organization)}
+            url={getAvatarUrl(rootContext.API_URL, organization)}
           />
           <span className="text-ellipsis overflow-hidden">
             {organization.name}

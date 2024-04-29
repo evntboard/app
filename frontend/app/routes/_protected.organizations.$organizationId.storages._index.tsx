@@ -26,7 +26,7 @@ import {
   DropdownMenuTrigger
 } from '~/components/ui/dropdown-menu';
 import { ScrollArea } from '~/components/ui/scroll-area';
-import { pb } from '~/utils/pb.client';
+import { usePocketBase } from '~/hook/usePocketBase';
 
 export async function action(args: ActionFunctionArgs) {
   const pb = getPocketbase(args.request);
@@ -204,6 +204,7 @@ export const columns: ColumnDef<StoragesResponse>[] = [
 ];
 
 export default function OrganizationIdScriptLayout() {
+  const pb = usePocketBase()
   const { storages, organization } = useLoaderData<typeof loader>();
   const revalidator = useRevalidator();
 

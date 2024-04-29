@@ -22,6 +22,7 @@ import {cn} from '~/utils/cn';
 import { OrganizationsResponse } from '~/types/pocketbase';
 import { useLocation } from '@remix-run/react';
 import { getAvatarUrl } from '~/utils/avatar'
+import { useRootContext } from '~/context/root';
 
 type PopoverTriggerProps = React.ComponentPropsWithoutRef<typeof PopoverTrigger>
 
@@ -31,6 +32,7 @@ interface Props extends PopoverTriggerProps {
 }
 
 export function OrganizationSwitcher({className, organizations}: Props) {
+  const rootContext = useRootContext()
   const navigate = useNavigate();
   const location = useLocation();
   const {organizationId} = useParams();
@@ -51,7 +53,7 @@ export function OrganizationSwitcher({className, organizations}: Props) {
             currentOrga && (
               <div className="flex items-center gap-2 w-full">
                 <AvatarPb
-                  url={getAvatarUrl(currentOrga)}
+                  url={getAvatarUrl(rootContext.API_URL, currentOrga)}
                 />
                 <div className="grow text-ellipsis overflow-hidden text-left">
                   {
@@ -92,7 +94,7 @@ export function OrganizationSwitcher({className, organizations}: Props) {
                   className="flex gap-2 w-full cursor-pointer"
                 >
                   <AvatarPb
-                    url={getAvatarUrl(team)}
+                    url={getAvatarUrl(rootContext.API_URL, team)}
                   />
                   <div className="grow text-ellipsis overflow-hidden">
                     {team?.name ?? '-'}

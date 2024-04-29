@@ -9,12 +9,14 @@ import { ImagePb } from '~/components/image-pb'
 import { UsersResponse } from '~/types/pocketbase'
 import { cn } from '~/utils/cn'
 import { getAvatarUrl } from '~/utils/avatar'
+import { useRootContext } from '~/context/root.tsx';
 
 type Props = {
   user: UsersResponse
 }
 
 export const FormAvatar = ({ user }: Props) => {
+  const rootContext = useRootContext()
   const fetcher = useFetcher<{
     errors?: Record<string, { type: string, message: string }>
   }>()
@@ -70,7 +72,7 @@ export const FormAvatar = ({ user }: Props) => {
           {
             !file && (
               <ImagePb
-                url={getAvatarUrl(user)}
+                url={getAvatarUrl(rootContext.API_URL, user)}
                 className="w-28 min-h-28 bg-foreground border rounded aspect-square h-full object-cover"
               />
             )

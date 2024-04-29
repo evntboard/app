@@ -5,7 +5,7 @@ import { TypedPocketBase } from '~/types/pocketbase';
 
 export function getPocketbase(request?: Request) {
   const pb = new Pocketbase(
-    process.env.POCKETBASE_URL || 'http://127.0.0.1:8090'
+    process.env.API_PRIVATE_URL || 'http://127.0.0.1:8090'
   ) as TypedPocketBase;
 
   if (request) {

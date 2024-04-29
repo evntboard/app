@@ -9,7 +9,6 @@ import { Check, ChevronsUpDown } from 'lucide-react'
 
 import { getAvatarUrl } from '~/utils/avatar'
 import { cn } from '~/utils/cn'
-import { pb } from '~/utils/pb.client'
 import { eventCreateFormSchema } from '~/validation/event'
 import { Collections, CustomEventsResponse, OrganizationsResponse } from '~/types/pocketbase'
 import { Button } from '~/components/ui/button'
@@ -22,12 +21,16 @@ import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, D
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from '~/components/ui/command'
 import { Popover, PopoverContent, PopoverTrigger } from '~/components/ui/popover'
 import { Tooltip, TooltipContent, TooltipTrigger } from '~/components/ui/tooltip'
+import { useRootContext } from '~/context/root';
+import { usePocketBase } from '~/hook/usePocketBase';
 
 type Props = {
   organization: OrganizationsResponse,
 }
 
 export const AddEvent = ({ organization }: Props) => {
+  const rootContext = useRootContext()
+  const pb = usePocketBase()
   const [isLoading, setIsLoading] = useState<boolean>(false)
   const [open, setOpen] = useState<boolean>(false)
 
@@ -119,7 +122,7 @@ export const AddEvent = ({ organization }: Props) => {
         <DialogHeader>
           <DialogTitle className="flex gap-2 items-center">
             Send a new event to
-            <AvatarPb url={getAvatarUrl(organization)} />
+            <AvatarPb url={getAvatarUrl(rootContext.API_URL, organization)} />
             {organization.name}
           </DialogTitle>
           <DialogDescription>

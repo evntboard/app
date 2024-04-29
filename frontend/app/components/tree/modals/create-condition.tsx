@@ -18,8 +18,8 @@ import { cn } from '~/utils/cn'
 import { TreeNodeAction, TreeNodeType } from '~/types/tree'
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '~/components/ui/form'
 import { triggerConditionCreateFormSchema } from '~/validation/trigger'
-import { pb } from '~/utils/pb.client'
 import { ComboboxCreate, ComboboxOptions } from '~/components/combobox-create'
+import { usePocketBase } from '~/hook/usePocketBase'
 
 type Props = {
   organizationId: string,
@@ -29,6 +29,7 @@ type Props = {
 }
 
 export const CreateConditionModal = ({ entity, organizationId, action, onClose }: Props) => {
+  const pb = usePocketBase()
   const [options, setOptions] = useState<Array<ComboboxOptions>>([])
   const fetcher = useFetcher<{
     errors?: Record<string, { type: string, message: string }>

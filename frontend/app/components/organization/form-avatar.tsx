@@ -9,12 +9,14 @@ import { cn } from '~/utils/cn';
 import { OrganizationsResponse } from '~/types/pocketbase';
 import { ImagePb } from '~/components/image-pb';
 import { getAvatarUrl } from '~/utils/avatar'
+import { useRootContext } from '~/context/root.tsx';
 
 type Props = {
   organization: OrganizationsResponse,
 }
 
 export const FormOrganizationAvatar = ({ organization }: Props) => {
+  const rootContext = useRootContext()
   const fetcher = useFetcher();
   const fetcherDelete = useFetcher();
   const [file, setFile] = useState<File & { preview: string }>();
@@ -71,7 +73,7 @@ export const FormOrganizationAvatar = ({ organization }: Props) => {
           {
             !file && (
               <ImagePb
-                url={getAvatarUrl(organization)}
+                url={getAvatarUrl(rootContext.API_URL, organization)}
                 className="w-28 min-h-28 bg-foreground border rounded aspect-square h-full object-cover"
               />
             )

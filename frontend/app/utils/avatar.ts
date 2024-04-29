@@ -1,6 +1,6 @@
 import { OrganizationsResponse, UsersResponse } from '~/types/pocketbase'
 
-export const getAvatarUrl = (entity: OrganizationsResponse | UsersResponse | undefined) => {
+export const getAvatarUrl = (pocketbaseUrl: string, entity: OrganizationsResponse | UsersResponse | undefined) => {
   if (entity === undefined) {
     return undefined
   }
@@ -9,9 +9,5 @@ export const getAvatarUrl = (entity: OrganizationsResponse | UsersResponse | und
     return undefined
   }
 
-  if (import.meta.env.PROD) {
-    return `/api/files/${entity.collectionName}/${entity.id}/${entity.avatar}`
-  } else {
-    return `http://localhost:8090/api/files/${entity.collectionName}/${entity.id}/${entity.avatar}`
-  }
+  return `${pocketbaseUrl}/api/files/${entity.collectionName}/${entity.id}/${entity.avatar}`
 }

@@ -28,7 +28,7 @@ import {
   DialogTitle,
 } from '~/components/ui/dialog'
 import { EjectModule } from '~/components/module/eject'
-import { pb } from '~/utils/pb.client'
+import { usePocketBase } from '~/hook/usePocketBase';
 
 export async function action(args: ActionFunctionArgs) {
   const pb = getPocketbase(args.request)
@@ -272,6 +272,7 @@ export const columns: ColumnDef<ModulesResponse<{ module_params_via_module: Modu
 ]
 
 export default function OrganizationIdScriptLayout() {
+  const pb = usePocketBase()
   const { modules, organization } = useLoaderData<typeof loader>()
   const revalidator = useRevalidator();
 

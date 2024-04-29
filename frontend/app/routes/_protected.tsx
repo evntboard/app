@@ -16,6 +16,7 @@ import { AvatarPb } from '~/components/avatar-pb'
 import { getAvatarUrl } from '~/utils/avatar'
 import { ThemeToggle } from '~/components/theme-toggle'
 import { Collections, OrganizationsResponse, UserOrganizationResponse, UsersResponse } from '~/types/pocketbase'
+import { useRootContext } from '~/context/root.tsx';
 
 export async function loader({ request }: LoaderFunctionArgs) {
   const pb = getPocketbase(request)
@@ -49,6 +50,7 @@ export async function loader({ request }: LoaderFunctionArgs) {
 }
 
 export default function SecureLayout() {
+  const rootContext = useRootContext()
   const { user, organizations } = useLoaderData<typeof loader>()
   return (
     <div className="h-screen w-screen flex flex-col md:flex overflow-auto">
@@ -77,7 +79,7 @@ export default function SecureLayout() {
             }
             <DropdownMenu>
               <DropdownMenuTrigger>
-                <AvatarPb url={getAvatarUrl(user)} />
+                <AvatarPb url={getAvatarUrl(rootContext.API_URL, user)} />
               </DropdownMenuTrigger>
               <DropdownMenuContent className="w-56" align="end">
                 <DropdownMenuLabel className="font-normal">

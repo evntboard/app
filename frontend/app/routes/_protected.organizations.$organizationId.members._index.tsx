@@ -28,6 +28,7 @@ import { Icons } from '~/components/icons'
 import { AvatarPb } from '~/components/avatar-pb'
 import { ScrollArea } from '~/components/ui/scroll-area'
 import { getAvatarUrl } from '~/utils/avatar'
+import { useRootContext } from '~/context/root.tsx';
 
 export async function action(args: ActionFunctionArgs) {
   const pb = getPocketbase(args.request)
@@ -130,9 +131,10 @@ const columns: ColumnDef<UserOrganizationResponse<{ user: UsersResponse }>>[] = 
     accessorKey: 'user',
     header: 'User',
     cell: ({ row: { original } }) => {
+      const rootContext = useRootContext()
       return (
         <div className="flex gap-2 items-center">
-          <AvatarPb url={getAvatarUrl(original.expand?.user)} />
+          <AvatarPb url={getAvatarUrl(rootContext.API_URL, original.expand?.user)} />
           {original.expand?.user.name ?? '-'}
         </div>
       )
@@ -145,6 +147,7 @@ const columns: ColumnDef<UserOrganizationResponse<{ user: UsersResponse }>>[] = 
   {
     id: 'actions',
     cell: function CellActions({ row }) {
+      const rootContext = useRootContext()
       const fetcher = useFetcher()
       const { organization } = useLoaderData<typeof loader>()
       const [modalDeleteOpen, setModalDeleteOpen] = useState(false)
@@ -160,9 +163,9 @@ const columns: ColumnDef<UserOrganizationResponse<{ user: UsersResponse }>>[] = 
               <DialogHeader>
                 <DialogTitle className="flex gap-2 items-center">
                   Do you want to remove
-                  <AvatarPb url={getAvatarUrl(row.original.expand?.user)} />
+                  <AvatarPb url={getAvatarUrl(rootContext.API_URL, row.original.expand?.user)} />
                   {row.original.expand?.user.name} from
-                  <AvatarPb url={getAvatarUrl(organization)} />
+                  <AvatarPb url={getAvatarUrl(rootContext.API_URL, organization)} />
                   {organization.name}
                   ?
                 </DialogTitle>
